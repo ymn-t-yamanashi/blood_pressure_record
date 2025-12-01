@@ -11,8 +11,10 @@ defmodule BloodPressureRecord.Application do
       BloodPressureRecordWeb.Telemetry,
       BloodPressureRecord.Repo,
       {Ecto.Migrator,
-       repos: Application.fetch_env!(:blood_pressure_record, :ecto_repos), skip: skip_migrations?()},
-      {DNSCluster, query: Application.get_env(:blood_pressure_record, :dns_cluster_query) || :ignore},
+       repos: Application.fetch_env!(:blood_pressure_record, :ecto_repos),
+       skip: skip_migrations?()},
+      {DNSCluster,
+       query: Application.get_env(:blood_pressure_record, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: BloodPressureRecord.PubSub},
       # Start a worker by calling: BloodPressureRecord.Worker.start_link(arg)
       # {BloodPressureRecord.Worker, arg},

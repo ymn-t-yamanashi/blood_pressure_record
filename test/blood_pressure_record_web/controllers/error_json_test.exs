@@ -2,7 +2,9 @@ defmodule BloodPressureRecordWeb.ErrorJSONTest do
   use BloodPressureRecordWeb.ConnCase, async: true
 
   test "renders 404" do
-    assert BloodPressureRecordWeb.ErrorJSON.render("404.json", %{}) == %{errors: %{detail: "Not Found"}}
+    assert BloodPressureRecordWeb.ErrorJSON.render("404.json", %{}) == %{
+             errors: %{detail: "Not Found"}
+           }
   end
 
   test "renders 500" do

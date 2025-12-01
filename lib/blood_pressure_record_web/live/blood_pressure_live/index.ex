@@ -19,7 +19,9 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.Index do
       <.table
         id="blood_pressures"
         rows={@streams.blood_pressures}
-        row_click={fn {_id, blood_pressure} -> JS.navigate(~p"/blood_pressures/#{blood_pressure}") end}
+        row_click={
+          fn {_id, blood_pressure} -> JS.navigate(~p"/blood_pressures/#{blood_pressure}") end
+        }
       >
         <:col :let={{_id, blood_pressure}} label="Systolic">{blood_pressure.systolic}</:col>
         <:col :let={{_id, blood_pressure}} label="Diastolic">{blood_pressure.diastolic}</:col>

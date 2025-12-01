@@ -75,7 +75,10 @@ defmodule BloodPressureRecordWeb.BloodPressureLiveTest do
     test "deletes blood_pressure in listing", %{conn: conn, blood_pressure: blood_pressure} do
       {:ok, index_live, _html} = live(conn, ~p"/blood_pressures")
 
-      assert index_live |> element("#blood_pressures-#{blood_pressure.id} a", "Delete") |> render_click()
+      assert index_live
+             |> element("#blood_pressures-#{blood_pressure.id} a", "Delete")
+             |> render_click()
+
       refute has_element?(index_live, "#blood_pressures-#{blood_pressure.id}")
     end
   end
@@ -89,14 +92,20 @@ defmodule BloodPressureRecordWeb.BloodPressureLiveTest do
       assert html =~ "Show Blood pressure"
     end
 
-    test "updates blood_pressure and returns to show", %{conn: conn, blood_pressure: blood_pressure} do
+    test "updates blood_pressure and returns to show", %{
+      conn: conn,
+      blood_pressure: blood_pressure
+    } do
       {:ok, show_live, _html} = live(conn, ~p"/blood_pressures/#{blood_pressure}")
 
       assert {:ok, form_live, _} =
                show_live
                |> element("a", "Edit")
                |> render_click()
-               |> follow_redirect(conn, ~p"/blood_pressures/#{blood_pressure}/edit?return_to=show")
+               |> follow_redirect(
+                 conn,
+                 ~p"/blood_pressures/#{blood_pressure}/edit?return_to=show"
+               )
 
       assert render(form_live) =~ "Edit Blood pressure"
 

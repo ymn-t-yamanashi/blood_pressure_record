@@ -14,7 +14,10 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.Show do
           <.button navigate={~p"/blood_pressures"}>
             <.icon name="hero-arrow-left" />
           </.button>
-          <.button variant="primary" navigate={~p"/blood_pressures/#{@blood_pressure}/edit?return_to=show"}>
+          <.button
+            variant="primary"
+            navigate={~p"/blood_pressures/#{@blood_pressure}/edit?return_to=show"}
+          >
             <.icon name="hero-pencil-square" /> Edit blood_pressure
           </.button>
         </:actions>

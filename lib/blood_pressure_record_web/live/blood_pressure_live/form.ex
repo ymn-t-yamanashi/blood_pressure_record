@@ -58,7 +58,9 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.Form do
 
   @impl true
   def handle_event("validate", %{"blood_pressure" => blood_pressure_params}, socket) do
-    changeset = BloodPressures.change_blood_pressure(socket.assigns.blood_pressure, blood_pressure_params)
+    changeset =
+      BloodPressures.change_blood_pressure(socket.assigns.blood_pressure, blood_pressure_params)
+
     {:noreply, assign(socket, form: to_form(changeset, action: :validate))}
   end
 
@@ -67,7 +69,10 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.Form do
   end
 
   defp save_blood_pressure(socket, :edit, blood_pressure_params) do
-    case BloodPressures.update_blood_pressure(socket.assigns.blood_pressure, blood_pressure_params) do
+    case BloodPressures.update_blood_pressure(
+           socket.assigns.blood_pressure,
+           blood_pressure_params
+         ) do
       {:ok, blood_pressure} ->
         {:noreply,
          socket

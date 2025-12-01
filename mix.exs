@@ -82,7 +82,11 @@ defmodule BloodPressureRecord.MixProject do
       "ecto.reset": ["ecto.drop", "ecto.setup"],
       test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"],
       "assets.setup": ["tailwind.install --if-missing", "esbuild.install --if-missing"],
-      "assets.build": ["compile", "tailwind blood_pressure_record", "esbuild blood_pressure_record"],
+      "assets.build": [
+        "compile",
+        "tailwind blood_pressure_record",
+        "esbuild blood_pressure_record"
+      ],
       "assets.deploy": [
         "tailwind blood_pressure_record --minify",
         "esbuild blood_pressure_record --minify",
