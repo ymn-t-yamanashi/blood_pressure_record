@@ -65,7 +65,7 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.Graph do
     # 色のエンコーディング: type（測定項目）ごとに色分けして、線を分ける
     |> Vl.encode_field(:color, "type", type: :nominal, title: "測定項目")
 
-    # グラフの書き出し（PNGファイルとして保存）
+    # グラフの書き出し
     |> VlConvert.to_png()
     |> Base.encode64()
   end
