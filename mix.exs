@@ -67,7 +67,9 @@ defmodule BloodPressureRecord.MixProject do
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.5"},
       {:ollama, "0.8.0"},
-      {:evision, "~> 0.2.14"}
+      {:evision, "~> 0.2.14"},
+      {:vega_lite, "~> 0.1.11"},
+      {:vega_lite_convert, "~> 1.0.1"}
     ]
   end
 

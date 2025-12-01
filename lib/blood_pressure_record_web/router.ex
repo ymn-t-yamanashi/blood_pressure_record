@@ -23,6 +23,7 @@ defmodule BloodPressureRecordWeb.Router do
     live "/blood_pressures/:id", BloodPressureLive.Show, :show
     live "/blood_pressures/:id/edit", BloodPressureLive.Form, :edit
     live "/up", BloodPressureLive.UploadLive, :index
+    live "/graph", BloodPressureLive.Graph, :index
   end
 
   # Other scopes may use custom stacks.
