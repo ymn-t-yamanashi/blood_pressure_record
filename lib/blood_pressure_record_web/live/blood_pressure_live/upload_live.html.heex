@@ -1,33 +1,46 @@
 <%!-- lib/my_app_web/live/upload_live.html.heex --%>
 <%!-- use phx-drop-target with the upload ref to enable file drag and drop --%>
-<form id="upload-form" phx-change="validate" phx-submit="save">
-  <.live_file_input upload={@uploads.avatar} />
-  <button type="submit">Upload</button>
-</form>
-<section phx-drop-target={@uploads.avatar.ref}>
-  <%!-- render each avatar entry --%>
-  <article :for={entry <- @uploads.avatar.entries} class="upload-entry">
-    <figure>
-      <.live_img_preview entry={entry} />
-      <figcaption>{entry.client_name}</figcaption>
-    </figure>
+<Layouts.app flash={@flash}>
+  <form id="upload-form" phx-change="validate" phx-submit="save">
+    <.live_file_input class="btn btn-primary w-36 h-6 cursor-pointer" upload={@uploads.avatar} />
+    <button type="submit" class="btn btn-primary w-36 h-6 cursor-pointer">Upload</button>
+  </form>
+  <div class="mt-5 h-52 w-52 bg-blue-100">
+    <section phx-drop-target={@uploads.avatar.ref}>
+      <%!-- render each avatar entry --%>
+      <article :for={entry <- @uploads.avatar.entries} class="upload-entry">
+        <figure>
+          <.live_img_preview entry={entry} />
+          <figcaption>{entry.client_name}</figcaption>
+        </figure>
 
-    <%!-- entry.progress will update automatically for in-flight entries --%>
-    <progress value={entry.progress} max="100">{entry.progress}% </progress>
+        <%!-- entry.progress will update automatically for in-flight entries --%>
+        <progress value={entry.progress} max="100">{entry.progress}% </progress>
 
-    <%!-- a regular click event whose handler will invoke Phoenix.LiveView.cancel_upload/3 --%>
-    <button type="button" phx-click="cancel-upload" phx-value-ref={entry.ref} aria-label="cancel">
-      &times;
-    </button>
+        <%!-- a regular click event whose handler will invoke Phoenix.LiveView.cancel_upload/3
+                                    --%>
+        <button
+          type="button"
+          phx-click="cancel-upload"
+          phx-value-ref={entry.ref}
+          aria-label="cancel"
+        >
+          &times;
+        </button>
 
-    <%!-- Phoenix.Component.upload_errors/2 returns a list of error atoms --%>
-    <p :for={err <- upload_errors(@uploads.avatar, entry)} class="alert alert-danger">
-      {error_to_string(err)}
-    </p>
-  </article>
+        <%!-- Phoenix.Component.upload_errors/2 returns a list of error atoms --%>
+        <p
+          :for={err <- upload_errors(@uploads.avatar, entry)}
+          class="alert alert-danger"
+        >
+          {error_to_string(err)}
+        </p>
+      </article>
 
-  <%!-- Phoenix.Component.upload_errors/1 returns a list of error atoms --%>
-  <p :for={err <- upload_errors(@uploads.avatar)} class="alert alert-danger">
-    {error_to_string(err)}
-  </p>
-</section>
+      <%!-- Phoenix.Component.upload_errors/1 returns a list of error atoms --%>
+      <p :for={err <- upload_errors(@uploads.avatar)} class="alert alert-danger">
+        {error_to_string(err)}
+      </p>
+    </section>
+  </div>
+</Layouts.app>
