@@ -9,7 +9,7 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.Graph do
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash}>
-      <img src={"data:image/png;base64,#{@blood_pressures_png}"} alt="代替テキスト">
+      <img src={"data:image/png;base64,#{@blood_pressures_png}"}>
     </Layouts.app>
     """
   end
