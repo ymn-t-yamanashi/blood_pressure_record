@@ -42,7 +42,6 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
       measured_at: measured_at
     })
 
-    # {:noreply, socket}
   end
 
   def run(file) do
