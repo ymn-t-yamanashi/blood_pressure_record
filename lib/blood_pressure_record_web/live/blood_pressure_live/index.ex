@@ -10,6 +10,9 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.Index do
       <.header>
         Listing Blood pressures
         <:actions>
+          <.button variant="primary" navigate={~p"/up"}>
+            <.icon name="hero-plus" /> Up Blood pressure
+          </.button>
           <.button variant="primary" navigate={~p"/blood_pressures/new"}>
             <.icon name="hero-plus" /> New Blood pressure
           </.button>
