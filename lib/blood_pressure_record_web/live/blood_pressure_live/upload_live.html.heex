@@ -2,7 +2,13 @@
 <%!-- use phx-drop-target with the upload ref to enable file drag and drop --%>
 <Layouts.app flash={@flash}>
   <form id="upload-form" phx-change="validate">
-    <.live_file_input id="avatar-upload-input" class="sr-only" upload={@uploads.avatar} />
+    <.live_file_input class="sr-only" upload={@uploads.avatar} />
+    <label
+      for={@uploads.avatar.ref}
+      class="inline-flex h-6 w-36 cursor-pointer items-center justify-center rounded-md bg-zinc-800 px-3 text-sm font-medium text-white transition hover:bg-zinc-700"
+    >
+      アップロード
+    </label>
     <.link
       navigate={~p"/blood_pressures"}
       class="inline-flex h-6 w-36 items-center justify-center rounded-md border border-zinc-300 px-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
