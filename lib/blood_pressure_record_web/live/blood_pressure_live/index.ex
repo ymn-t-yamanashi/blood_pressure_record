@@ -27,10 +27,12 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.Index do
           fn {_id, blood_pressure} -> JS.navigate(~p"/blood_pressures/#{blood_pressure}") end
         }
       >
+        <:col :let={{_id, blood_pressure}} label="Measured at">
+          {format_measured_at(blood_pressure.measured_at)}
+        </:col>
         <:col :let={{_id, blood_pressure}} label="Systolic">{blood_pressure.systolic}</:col>
         <:col :let={{_id, blood_pressure}} label="Diastolic">{blood_pressure.diastolic}</:col>
         <:col :let={{_id, blood_pressure}} label="Pulse">{blood_pressure.pulse}</:col>
-        <:col :let={{_id, blood_pressure}} label="Measured at">{blood_pressure.measured_at}</:col>
         <:action :let={{_id, blood_pressure}}>
           <div class="sr-only">
             <.link navigate={~p"/blood_pressures/#{blood_pressure}"}>Show</.link>
@@ -143,5 +145,9 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.Index do
 
   defp total_pages(total_count) do
     max(div(total_count + @per_page - 1, @per_page), 1)
+  end
+
+  defp format_measured_at(%NaiveDateTime{} = measured_at) do
+    Calendar.strftime(measured_at, "%Y/%m/%d")
   end
 end
