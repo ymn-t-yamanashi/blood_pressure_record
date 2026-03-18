@@ -11,6 +11,7 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
      |> assign(:uploaded_files, [])
      |> assign(:pending_blood_pressure, nil)
      |> assign(:pending_image_data_url, nil)
+     |> assign(:confirm_form, to_form(%{"measured_at_date" => ""}, as: :confirm))
      |> allow_upload(:avatar, accept: ~w(.jpg .jpeg), max_entries: 1)}
   end
 
@@ -43,16 +44,45 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
 
     case parse_blood_pressure(parsed_values) do
       {:ok, blood_pressure_params} ->
+        pending_blood_pressure = Map.put(blood_pressure_params, :measured_at, measured_at)
+
         {:noreply,
          socket
-         |> assign(
-           :pending_blood_pressure,
-           Map.put(blood_pressure_params, :measured_at, measured_at)
-         )
-         |> assign(:pending_image_data_url, preview_image)}
+         |> assign(:pending_blood_pressure, pending_blood_pressure)
+         |> assign(:pending_image_data_url, preview_image)
+         |> assign(:confirm_form, measured_at_form(pending_blood_pressure.measured_at))}
 
       :error ->
         {:noreply, put_flash(socket, :error, "画像から数値を読み取れませんでした")}
+    end
+  end
+
+  @impl Phoenix.LiveView
+  def handle_event(
+        "update-measured-at",
+        %{"confirm" => %{"measured_at_date" => date_value}},
+        socket
+      ) do
+    case socket.assigns.pending_blood_pressure do
+      %{measured_at: measured_at} = pending_blood_pressure ->
+        case Date.from_iso8601(date_value) do
+          {:ok, date} ->
+            updated_measured_at = NaiveDateTime.new!(date, NaiveDateTime.to_time(measured_at))
+
+            updated_blood_pressure =
+              Map.put(pending_blood_pressure, :measured_at, updated_measured_at)
+
+            {:noreply,
+             socket
+             |> assign(:pending_blood_pressure, updated_blood_pressure)
+             |> assign(:confirm_form, measured_at_form(updated_measured_at))}
+
+          _ ->
+            {:noreply, assign(socket, :confirm_form, measured_at_form(measured_at))}
+        end
+
+      _ ->
+        {:noreply, socket}
     end
   end
 
@@ -72,7 +102,8 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
     {:noreply,
      socket
      |> assign(:pending_blood_pressure, nil)
-     |> assign(:pending_image_data_url, nil)}
+     |> assign(:pending_image_data_url, nil)
+     |> assign(:confirm_form, to_form(%{"measured_at_date" => ""}, as: :confirm))}
   end
 
   def run(file) do
@@ -106,10 +137,11 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
       value when is_integer(value) ->
         value
         |> DateTime.from_unix!(:millisecond)
-        |> DateTime.to_naive()
+        |> to_jst_naive()
 
       _ ->
-        NaiveDateTime.utc_now()
+        DateTime.utc_now()
+        |> to_jst_naive()
     end
   end
 
@@ -132,7 +164,9 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
         {:noreply,
          socket
          |> put_flash(:info, "Blood pressure created successfully")
-         |> push_navigate(to: "/blood_pressures")}
+         |> assign(:pending_blood_pressure, nil)
+         |> assign(:pending_image_data_url, nil)
+         |> assign(:confirm_form, to_form(%{"measured_at_date" => ""}, as: :confirm))}
 
       {:error, %Ecto.Changeset{}} ->
         {:noreply, put_flash(socket, :error, "保存に失敗しました")}
@@ -155,6 +189,18 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
   end
 
   defp parse_blood_pressure(_values), do: :error
+
+  defp measured_at_form(%NaiveDateTime{} = measured_at) do
+    to_form(%{"measured_at_date" => Date.to_iso8601(NaiveDateTime.to_date(measured_at))},
+      as: :confirm
+    )
+  end
+
+  defp to_jst_naive(%DateTime{} = datetime) do
+    datetime
+    |> DateTime.add(9 * 60 * 60, :second)
+    |> DateTime.to_naive()
+  end
 
   defp error_to_string(:too_large), do: "Too large"
   defp error_to_string(:too_many_files), do: "You have selected too many files"
