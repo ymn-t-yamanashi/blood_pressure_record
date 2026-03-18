@@ -17,7 +17,7 @@ defmodule BloodPressureRecordWeb.Router do
   scope "/", BloodPressureRecordWeb do
     pipe_through :browser
 
-    get "/", PageController, :home
+    live "/", BloodPressureLive.Index, :index
     live "/blood_pressures", BloodPressureLive.Index, :index
     live "/blood_pressures/new", BloodPressureLive.Form, :new
     live "/blood_pressures/:id", BloodPressureLive.Show, :show
