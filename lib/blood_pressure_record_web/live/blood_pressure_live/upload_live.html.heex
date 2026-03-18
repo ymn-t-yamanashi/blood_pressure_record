@@ -1,9 +1,8 @@
 <%!-- lib/my_app_web/live/upload_live.html.heex --%>
 <%!-- use phx-drop-target with the upload ref to enable file drag and drop --%>
 <Layouts.app flash={@flash}>
-  <form id="upload-form" phx-change="validate" phx-submit="save">
+  <form id="upload-form" phx-change="validate">
     <.live_file_input class="btn btn-primary w-36 h-6 cursor-pointer" upload={@uploads.avatar} />
-    <button type="submit" class="btn btn-primary w-36 h-6 cursor-pointer">Upload</button>
     <.link
       navigate={~p"/blood_pressures"}
       class="inline-flex h-6 w-36 items-center justify-center rounded-md border border-zinc-300 px-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"

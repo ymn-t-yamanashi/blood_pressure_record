@@ -12,7 +12,12 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
      |> assign(:pending_blood_pressure, nil)
      |> assign(:pending_image_data_url, nil)
      |> assign(:confirm_form, to_form(%{"measured_at_date" => ""}, as: :confirm))
-     |> allow_upload(:avatar, accept: ~w(.jpg .jpeg), max_entries: 1)}
+     |> allow_upload(:avatar,
+       accept: ~w(.jpg .jpeg),
+       max_entries: 1,
+       auto_upload: true,
+       progress: &handle_progress/3
+     )}
   end
 
   @impl Phoenix.LiveView
@@ -23,38 +28,6 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
   @impl Phoenix.LiveView
   def handle_event("cancel-upload", %{"ref" => ref}, socket) do
     {:noreply, cancel_upload(socket, :avatar, ref)}
-  end
-
-  @impl Phoenix.LiveView
-  def handle_event("save", _params, socket) do
-    upload_result =
-      consume_uploaded_entries(socket, :avatar, fn %{path: path}, entry ->
-        {:ok,
-         %{
-           values: run(path),
-           image_data_url: image_data_url(path),
-           measured_at: measured_at_from_entry(entry)
-         }}
-      end)
-      |> List.first()
-
-    parsed_values = upload_result && upload_result.values
-    preview_image = upload_result && upload_result.image_data_url
-    measured_at = upload_result && upload_result.measured_at
-
-    case parse_blood_pressure(parsed_values) do
-      {:ok, blood_pressure_params} ->
-        pending_blood_pressure = Map.put(blood_pressure_params, :measured_at, measured_at)
-
-        {:noreply,
-         socket
-         |> assign(:pending_blood_pressure, pending_blood_pressure)
-         |> assign(:pending_image_data_url, preview_image)
-         |> assign(:confirm_form, measured_at_form(pending_blood_pressure.measured_at))}
-
-      :error ->
-        {:noreply, put_flash(socket, :error, "画像から数値を読み取れませんでした")}
-    end
   end
 
   @impl Phoenix.LiveView
@@ -205,4 +178,40 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
   defp error_to_string(:too_large), do: "Too large"
   defp error_to_string(:too_many_files), do: "You have selected too many files"
   defp error_to_string(:not_accepted), do: "You have selected an unacceptable file type"
+
+  defp handle_progress(:avatar, entry, socket) do
+    if entry.done? do
+      upload_result =
+        consume_uploaded_entry(socket, entry, fn %{path: path} ->
+          {:ok,
+           %{
+             values: run(path),
+             image_data_url: image_data_url(path),
+             measured_at: measured_at_from_entry(entry)
+           }}
+        end)
+
+      parsed_values = upload_result && upload_result.values
+      preview_image = upload_result && upload_result.image_data_url
+      measured_at = upload_result && upload_result.measured_at
+
+      socket =
+        case parse_blood_pressure(parsed_values) do
+          {:ok, blood_pressure_params} ->
+            pending_blood_pressure = Map.put(blood_pressure_params, :measured_at, measured_at)
+
+            socket
+            |> assign(:pending_blood_pressure, pending_blood_pressure)
+            |> assign(:pending_image_data_url, preview_image)
+            |> assign(:confirm_form, measured_at_form(pending_blood_pressure.measured_at))
+
+          :error ->
+            put_flash(socket, :error, "画像から数値を読み取れませんでした")
+        end
+
+      {:noreply, socket}
+    else
+      {:noreply, socket}
+    end
+  end
 end
