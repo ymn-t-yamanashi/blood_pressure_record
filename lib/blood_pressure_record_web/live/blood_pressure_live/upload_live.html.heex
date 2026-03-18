@@ -2,7 +2,7 @@
 <%!-- use phx-drop-target with the upload ref to enable file drag and drop --%>
 <Layouts.app flash={@flash}>
   <form id="upload-form" phx-change="validate">
-    <.live_file_input class="btn btn-primary w-36 h-6 cursor-pointer" upload={@uploads.avatar} />
+    <.live_file_input id="avatar-upload-input" class="sr-only" upload={@uploads.avatar} />
     <.link
       navigate={~p"/blood_pressures"}
       class="inline-flex h-6 w-36 items-center justify-center rounded-md border border-zinc-300 px-3 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
@@ -65,8 +65,18 @@
   <% end %>
 
   <%= if is_nil(@pending_blood_pressure) do %>
-    <div class="mt-5 h-52 w-52 bg-blue-100">
-      <section phx-drop-target={@uploads.avatar.ref}>
+    <div class="mt-5">
+      <section
+        phx-drop-target={@uploads.avatar.ref}
+        class="flex h-52 w-full max-w-xl items-center justify-center rounded-xl border-2 border-dashed border-zinc-300 bg-zinc-50 text-center transition hover:border-zinc-400 hover:bg-zinc-100"
+      >
+        <div class="space-y-2">
+          <p class="text-base font-semibold text-zinc-700">ここに画像をドラッグ＆ドロップ</p>
+          <p class="text-sm text-zinc-500">.jpg / .jpeg のみ対応</p>
+        </div>
+      </section>
+
+      <section phx-drop-target={@uploads.avatar.ref} class="mt-4">
         <%!-- render each avatar entry --%>
         <article :for={entry <- @uploads.avatar.entries} class="upload-entry">
           <figure>
