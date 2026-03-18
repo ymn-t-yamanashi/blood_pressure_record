@@ -9,6 +9,8 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
     {:ok,
      socket
      |> assign(:uploaded_files, [])
+     |> assign(:pending_blood_pressure, nil)
+     |> assign(:pending_image_data_url, nil)
      |> allow_upload(:avatar, accept: ~w(.jpg .jpeg), max_entries: 1)}
   end
 
@@ -24,23 +26,53 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
 
   @impl Phoenix.LiveView
   def handle_event("save", _params, socket) do
-    data =
-      consume_uploaded_entries(socket, :avatar, fn %{path: path}, _entry ->
-        {:ok, run(path)}
+    upload_result =
+      consume_uploaded_entries(socket, :avatar, fn %{path: path}, entry ->
+        {:ok,
+         %{
+           values: run(path),
+           image_data_url: image_data_url(path),
+           measured_at: measured_at_from_entry(entry)
+         }}
       end)
       |> List.first()
 
-    systolic = Enum.at(data, 0) |> String.to_integer()
-    diastolic = Enum.at(data, 1) |> String.to_integer()
-    pulse = Enum.at(data, 2) |> String.to_integer()
-    measured_at = NaiveDateTime.utc_now()
+    parsed_values = upload_result && upload_result.values
+    preview_image = upload_result && upload_result.image_data_url
+    measured_at = upload_result && upload_result.measured_at
 
-    save_blood_pressure(socket, %{
-      systolic: systolic,
-      diastolic: diastolic,
-      pulse: pulse,
-      measured_at: measured_at
-    })
+    case parse_blood_pressure(parsed_values) do
+      {:ok, blood_pressure_params} ->
+        {:noreply,
+         socket
+         |> assign(
+           :pending_blood_pressure,
+           Map.put(blood_pressure_params, :measured_at, measured_at)
+         )
+         |> assign(:pending_image_data_url, preview_image)}
+
+      :error ->
+        {:noreply, put_flash(socket, :error, "画像から数値を読み取れませんでした")}
+    end
+  end
+
+  @impl Phoenix.LiveView
+  def handle_event("confirm-save", _params, socket) do
+    case socket.assigns.pending_blood_pressure do
+      nil ->
+        {:noreply, put_flash(socket, :error, "先にUploadで読み取りを実行してください")}
+
+      blood_pressure_params ->
+        save_blood_pressure(socket, blood_pressure_params)
+    end
+  end
+
+  @impl Phoenix.LiveView
+  def handle_event("reset-pending", _params, socket) do
+    {:noreply,
+     socket
+     |> assign(:pending_blood_pressure, nil)
+     |> assign(:pending_image_data_url, nil)}
   end
 
   def run(file) do
@@ -65,6 +97,22 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
     |> Base.encode64()
   end
 
+  defp image_data_url(image_file_path) do
+    "data:image/jpeg;base64,#{File.read!(image_file_path) |> Base.encode64()}"
+  end
+
+  defp measured_at_from_entry(entry) do
+    case entry.client_last_modified do
+      value when is_integer(value) ->
+        value
+        |> DateTime.from_unix!(:millisecond)
+        |> DateTime.to_naive()
+
+      _ ->
+        NaiveDateTime.utc_now()
+    end
+  end
+
   defp prompt() do
     """
     次の数値のみ取得してください
@@ -86,10 +134,27 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
          |> put_flash(:info, "Blood pressure created successfully")
          |> push_navigate(to: "/blood_pressures")}
 
-      {:error, %Ecto.Changeset{} = changeset} ->
-        {:noreply, assign(socket, form: to_form(changeset))}
+      {:error, %Ecto.Changeset{}} ->
+        {:noreply, put_flash(socket, :error, "保存に失敗しました")}
     end
   end
+
+  defp parse_blood_pressure(nil), do: :error
+
+  defp parse_blood_pressure(values) when is_list(values) do
+    with systolic when not is_nil(systolic) <- Enum.at(values, 0),
+         diastolic when not is_nil(diastolic) <- Enum.at(values, 1),
+         pulse when not is_nil(pulse) <- Enum.at(values, 2),
+         {systolic, ""} <- Integer.parse(String.trim(systolic)),
+         {diastolic, ""} <- Integer.parse(String.trim(diastolic)),
+         {pulse, ""} <- Integer.parse(String.trim(pulse)) do
+      {:ok, %{systolic: systolic, diastolic: diastolic, pulse: pulse}}
+    else
+      _ -> :error
+    end
+  end
+
+  defp parse_blood_pressure(_values), do: :error
 
   defp error_to_string(:too_large), do: "Too large"
   defp error_to_string(:too_many_files), do: "You have selected too many files"

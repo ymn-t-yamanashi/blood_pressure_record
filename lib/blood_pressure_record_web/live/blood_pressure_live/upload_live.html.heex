@@ -5,6 +5,54 @@
     <.live_file_input class="btn btn-primary w-36 h-6 cursor-pointer" upload={@uploads.avatar} />
     <button type="submit" class="btn btn-primary w-36 h-6 cursor-pointer">Upload</button>
   </form>
+
+  <%= if @pending_blood_pressure do %>
+    <section
+      id="parsed-values"
+      class="mt-5 max-w-md rounded-xl border border-zinc-200 bg-zinc-50 p-4"
+    >
+      <h3 class="text-base font-semibold text-zinc-800">読み取り結果</h3>
+      <%= if @pending_image_data_url do %>
+        <img
+          id="pending-upload-image"
+          src={@pending_image_data_url}
+          alt="Uploaded blood pressure image"
+          class="mt-3 h-40 w-40 rounded-lg border border-zinc-200 object-cover"
+        />
+      <% end %>
+      <dl class="mt-3 grid grid-cols-2 gap-y-2 text-sm">
+        <dt class="text-zinc-500">Measured at</dt>
+        <dd class="font-medium text-zinc-900">
+          {Calendar.strftime(@pending_blood_pressure.measured_at, "%Y/%m/%d")}
+        </dd>
+        <dt class="text-zinc-500">Systolic</dt>
+        <dd class="font-medium text-zinc-900">{@pending_blood_pressure.systolic}</dd>
+        <dt class="text-zinc-500">Diastolic</dt>
+        <dd class="font-medium text-zinc-900">{@pending_blood_pressure.diastolic}</dd>
+        <dt class="text-zinc-500">Pulse</dt>
+        <dd class="font-medium text-zinc-900">{@pending_blood_pressure.pulse}</dd>
+      </dl>
+      <div class="mt-4 flex items-center gap-2">
+        <button
+          id="confirm-save-button"
+          type="button"
+          phx-click="confirm-save"
+          class="rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-emerald-700"
+        >
+          確定
+        </button>
+        <button
+          id="reset-pending-button"
+          type="button"
+          phx-click="reset-pending"
+          class="rounded-md border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
+        >
+          キャンセル
+        </button>
+      </div>
+    </section>
+  <% end %>
+
   <div class="mt-5 h-52 w-52 bg-blue-100">
     <section phx-drop-target={@uploads.avatar.ref}>
       <%!-- render each avatar entry --%>
