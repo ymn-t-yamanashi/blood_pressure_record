@@ -12,6 +12,7 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
      |> assign(:pending_blood_pressure, nil)
      |> assign(:pending_image_data_url, nil)
      |> assign(:confirm_form, to_form(%{"measured_at_date" => ""}, as: :confirm))
+     |> assign(:latest_blood_pressures, latest_blood_pressures())
      |> allow_upload(:avatar,
        accept: ~w(.jpg .jpeg),
        max_entries: 1,
@@ -139,7 +140,8 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
          |> put_flash(:info, "Blood pressure created successfully")
          |> assign(:pending_blood_pressure, nil)
          |> assign(:pending_image_data_url, nil)
-         |> assign(:confirm_form, to_form(%{"measured_at_date" => ""}, as: :confirm))}
+         |> assign(:confirm_form, to_form(%{"measured_at_date" => ""}, as: :confirm))
+         |> assign(:latest_blood_pressures, latest_blood_pressures())}
 
       {:error, %Ecto.Changeset{}} ->
         {:noreply, put_flash(socket, :error, "保存に失敗しました")}
@@ -173,6 +175,10 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
     datetime
     |> DateTime.add(9 * 60 * 60, :second)
     |> DateTime.to_naive()
+  end
+
+  defp latest_blood_pressures do
+    BloodPressures.list_blood_pressures(page: 1, per_page: 10)
   end
 
   defp error_to_string(:too_large), do: "Too large"
