@@ -2,6 +2,7 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.Index do
   use BloodPressureRecordWeb, :live_view
 
   alias BloodPressureRecord.BloodPressures
+  @per_page 31
 
   @impl true
   def render(assigns) do
@@ -45,6 +46,40 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.Index do
           </.link>
         </:action>
       </.table>
+
+      <div class="mt-6 flex items-center justify-between gap-4">
+        <p class="text-sm text-zinc-600">
+          Page {@page} / {@total_pages} ({@total_count} records)
+        </p>
+
+        <div class="flex items-center gap-2">
+          <%= if @page > 1 do %>
+            <.link
+              patch={~p"/blood_pressures?page=#{@page - 1}"}
+              class="rounded-md border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
+            >
+              Previous
+            </.link>
+          <% else %>
+            <span class="rounded-md border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-400">
+              Previous
+            </span>
+          <% end %>
+
+          <%= if @page < @total_pages do %>
+            <.link
+              patch={~p"/blood_pressures?page=#{@page + 1}"}
+              class="rounded-md border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
+            >
+              Next
+            </.link>
+          <% else %>
+            <span class="rounded-md border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-400">
+              Next
+            </span>
+          <% end %>
+        </div>
+      </div>
     </Layouts.app>
     """
   end
@@ -54,19 +89,59 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.Index do
     {:ok,
      socket
      |> assign(:page_title, "Listing Blood pressures")
-     |> stream(:blood_pressures, list_blood_pressures())}
+     |> assign(:page, 1)
+     |> assign(:total_count, 0)
+     |> assign(:total_pages, 1)
+     |> stream(:blood_pressures, [])}
+  end
+
+  @impl true
+  def handle_params(params, _uri, socket) do
+    page = params |> Map.get("page") |> parse_page()
+    total_count = BloodPressures.count_blood_pressures()
+    total_pages = total_pages(total_count)
+    current_page = min(page, total_pages)
+    blood_pressures = list_blood_pressures(current_page)
+
+    {:noreply,
+     socket
+     |> assign(:page, current_page)
+     |> assign(:total_count, total_count)
+     |> assign(:total_pages, total_pages)
+     |> stream(:blood_pressures, blood_pressures, reset: true)}
   end
 
   @impl true
   def handle_event("delete", %{"id" => id}, socket) do
     blood_pressure = BloodPressures.get_blood_pressure!(id)
     {:ok, _} = BloodPressures.delete_blood_pressure(blood_pressure)
+    total_count = max(socket.assigns.total_count - 1, 0)
+    total_pages = total_pages(total_count)
+    current_page = min(socket.assigns.page, total_pages)
+    blood_pressures = list_blood_pressures(current_page)
 
-    {:noreply, stream_delete(socket, :blood_pressures, blood_pressure)}
+    {:noreply,
+     socket
+     |> assign(:page, current_page)
+     |> assign(:total_count, total_count)
+     |> assign(:total_pages, total_pages)
+     |> stream(:blood_pressures, blood_pressures, reset: true)}
   end
 
-  defp list_blood_pressures() do
-    BloodPressures.list_blood_pressures()
-    |> Enum.sort_by(& &1.measured_at, {:desc, NaiveDateTime})
+  defp list_blood_pressures(page) do
+    BloodPressures.list_blood_pressures(page: page, per_page: @per_page)
+  end
+
+  defp parse_page(nil), do: 1
+
+  defp parse_page(page) when is_binary(page) do
+    case Integer.parse(page) do
+      {value, ""} when value > 0 -> value
+      _ -> 1
+    end
+  end
+
+  defp total_pages(total_count) do
+    max(div(total_count + @per_page - 1, @per_page), 1)
   end
 end

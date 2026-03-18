@@ -17,8 +17,25 @@ defmodule BloodPressureRecord.BloodPressures do
       [%BloodPressure{}, ...]
 
   """
-  def list_blood_pressures do
-    Repo.all(BloodPressure)
+  def list_blood_pressures(opts \\ []) do
+    page =
+      opts
+      |> Keyword.get(:page, 1)
+      |> normalize_positive_integer(1)
+
+    per_page =
+      opts
+      |> Keyword.get(:per_page)
+      |> normalize_positive_integer(nil)
+
+    BloodPressure
+    |> order_by([bp], desc: bp.measured_at, desc: bp.id)
+    |> maybe_paginate(page, per_page)
+    |> Repo.all()
+  end
+
+  def count_blood_pressures do
+    Repo.aggregate(BloodPressure, :count, :id)
   end
 
   @doc """
@@ -101,4 +118,18 @@ defmodule BloodPressureRecord.BloodPressures do
   def change_blood_pressure(%BloodPressure{} = blood_pressure, attrs \\ %{}) do
     BloodPressure.changeset(blood_pressure, attrs)
   end
+
+  defp maybe_paginate(query, _page, nil), do: query
+
+  defp maybe_paginate(query, page, per_page) do
+    offset = (page - 1) * per_page
+
+    query
+    |> limit(^per_page)
+    |> offset(^offset)
+  end
+
+  defp normalize_positive_integer(nil, default), do: default
+  defp normalize_positive_integer(value, _default) when is_integer(value) and value > 0, do: value
+  defp normalize_positive_integer(_value, default), do: default
 end
