@@ -186,7 +186,7 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
 
   defp blood_pressures_png do
     BloodPressures.list_blood_pressures()
-    |> BloodPressureGraphComponent.build_png()
+    |> BloodPressureGraphComponent.build_png(width: 1200, height: 800)
   end
 
   defp error_to_string(:too_large), do: "Too large"

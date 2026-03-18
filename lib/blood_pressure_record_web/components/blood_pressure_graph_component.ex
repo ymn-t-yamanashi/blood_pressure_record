@@ -13,10 +13,13 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
     """
   end
 
-  def build_png(blood_pressures) do
+  def build_png(blood_pressures, opts \\ []) do
+    width = Keyword.get(opts, :width, 600)
+    height = Keyword.get(opts, :height, 400)
+
     blood_pressures
     |> Enum.flat_map(&to_graph_data/1)
-    |> draw_graph()
+    |> draw_graph(width, height)
   end
 
   defp to_graph_data(data) do
@@ -29,8 +32,8 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
     ]
   end
 
-  defp draw_graph(data) do
-    Vl.new(width: 600, height: 400)
+  defp draw_graph(data, width, height) do
+    Vl.new(width: width, height: height)
     |> Vl.data_from_values(data)
     |> Vl.mark(:line, point: true)
     |> Vl.encode_field(:x, "date",
