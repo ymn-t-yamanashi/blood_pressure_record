@@ -86,6 +86,7 @@ defmodule BloodPressureRecordWeb do
       import Phoenix.HTML
       # Core UI components
       import BloodPressureRecordWeb.CoreComponents
+      import BloodPressureRecordWeb.BloodPressureGraphComponent
 
       # Common modules used in templates
       alias Phoenix.LiveView.JS
