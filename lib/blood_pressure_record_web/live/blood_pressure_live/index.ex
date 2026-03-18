@@ -67,5 +67,6 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.Index do
 
   defp list_blood_pressures() do
     BloodPressures.list_blood_pressures()
+    |> Enum.sort_by(& &1.measured_at, {:desc, NaiveDateTime})
   end
 end

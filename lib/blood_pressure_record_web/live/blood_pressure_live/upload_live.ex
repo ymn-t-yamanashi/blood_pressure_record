@@ -41,7 +41,6 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
       pulse: pulse,
       measured_at: measured_at
     })
-
   end
 
   def run(file) do
