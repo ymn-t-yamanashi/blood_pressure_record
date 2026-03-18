@@ -85,10 +85,7 @@
       <section phx-drop-target={@uploads.avatar.ref} class="mt-4">
         <%!-- render each avatar entry --%>
         <article :for={entry <- @uploads.avatar.entries} class="upload-entry">
-          <figure>
-            <.live_img_preview entry={entry} />
-            <figcaption>{entry.client_name}</figcaption>
-          </figure>
+          <p class="text-sm text-zinc-600">{entry.client_name}</p>
 
           <%!-- entry.progress will update automatically for in-flight entries --%>
           <progress value={entry.progress} max="100">{entry.progress}% </progress>
