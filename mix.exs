@@ -96,7 +96,10 @@ defmodule BloodPressureRecord.MixProject do
         "esbuild blood_pressure_record --minify",
         "phx.digest"
       ],
-      precommit: ["compile --warnings-as-errors", "deps.unlock --unused", "format", "test"]
+      precommit: ["compile --warnings-as-errors", "deps.unlock --unused", "format", "test"],
+      "db.backup": [
+        "run -e 'Ecto.Adapters.SQL.query!(BloodPressureRecord.Repo, \"VACUUM INTO \\'#{Date.utc_today()}_blood_pressure_record_dev.db\\' \")'"
+      ]
     ]
   end
 end
