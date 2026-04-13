@@ -61,13 +61,13 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
     systolic_threshold =
       Vl.new()
       |> Vl.data_from_values([%{threshold: 120}])
-      |> Vl.mark(:rule, color: "#facc15", stroke_width: 2, stroke_dash: [10, 6])
+      |> Vl.mark(:rule, color: "#9ca3af", stroke_width: 2, stroke_dash: [10, 6])
       |> Vl.encode_field(:y, "threshold", type: :quantitative, scale: [domain_min: 50])
 
     diastolic_threshold =
       Vl.new()
       |> Vl.data_from_values([%{threshold: 70}])
-      |> Vl.mark(:rule, color: "#facc15", stroke_width: 2, stroke_dash: [10, 6])
+      |> Vl.mark(:rule, color: "#9ca3af", stroke_width: 2, stroke_dash: [10, 6])
       |> Vl.encode_field(:y, "threshold", type: :quantitative, scale: [domain_min: 50])
 
     average_lines =
