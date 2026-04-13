@@ -200,7 +200,7 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
   end
 
   defp latest_blood_pressures do
-    BloodPressures.list_blood_pressures(page: 1, per_page: 10)
+    BloodPressures.list_blood_pressures(page: 1, per_page: 15)
   end
 
   defp latest_averages([]), do: %{systolic: nil, diastolic: nil, pulse: nil}
