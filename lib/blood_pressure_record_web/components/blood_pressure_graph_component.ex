@@ -39,7 +39,7 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
     line_chart =
       Vl.new()
       |> Vl.data_from_values(data)
-      |> Vl.mark(:line, point: true)
+      |> Vl.mark(:line, point: true, stroke_dash: [2, 2])
       |> Vl.encode_field(:x, "date",
         type: :temporal,
         title: "測定日",
@@ -73,7 +73,7 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
     average_lines =
       Vl.new()
       |> Vl.data_from_values(averages)
-      |> Vl.mark(:line, stroke_width: 2, stroke_dash: [6, 4], opacity: 0.85, point: true)
+      |> Vl.mark(:line, stroke_width: 2, opacity: 0.85, point: true)
       |> Vl.encode_field(:x, "date", type: :temporal)
       |> Vl.encode_field(:y, "value", type: :quantitative, scale: [domain_min: 50])
       |> Vl.encode_field(:color, "type", type: :nominal, title: "測定項目")
