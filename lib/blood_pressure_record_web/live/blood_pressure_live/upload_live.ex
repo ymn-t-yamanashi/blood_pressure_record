@@ -203,24 +203,105 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
     BloodPressures.list_blood_pressures(page: 1, per_page: 15)
   end
 
-  defp latest_averages([]), do: %{systolic: nil, diastolic: nil, pulse: nil}
+  defp latest_averages([]) do
+    %{
+      systolic: empty_metric(),
+      diastolic: empty_metric(),
+      pulse: empty_metric()
+    }
+  end
 
   defp latest_averages(blood_pressures) do
     count = length(blood_pressures)
 
     %{
-      systolic: average(count, Enum.map(blood_pressures, & &1.systolic)),
-      diastolic: average(count, Enum.map(blood_pressures, & &1.diastolic)),
-      pulse: average(count, Enum.map(blood_pressures, & &1.pulse))
+      systolic:
+        blood_pressures
+        |> Enum.map(& &1.systolic)
+        |> average(count)
+        |> metric_summary(:systolic),
+      diastolic:
+        blood_pressures
+        |> Enum.map(& &1.diastolic)
+        |> average(count)
+        |> metric_summary(:diastolic),
+      pulse:
+        blood_pressures
+        |> Enum.map(& &1.pulse)
+        |> average(count)
+        |> metric_summary(:pulse)
     }
   end
 
-  defp average(count, values) do
+  defp average(values, count) do
     values
     |> Enum.sum()
     |> Kernel./(count)
     |> Float.round(1)
   end
+
+  defp empty_metric do
+    %{
+      value: nil,
+      level_text: "データなし",
+      container_class: "border-zinc-200 bg-zinc-50",
+      text_class: "text-zinc-500"
+    }
+  end
+
+  defp metric_summary(value, metric) do
+    level = risk_level(metric, value)
+
+    %{
+      value: value,
+      level_text: risk_label(level),
+      container_class: risk_container_class(level),
+      text_class: risk_text_class(level)
+    }
+  end
+
+  defp risk_level(:systolic, value) do
+    cond do
+      value >= 160 -> :danger
+      value >= 140 -> :warning
+      value >= 120 -> :caution
+      true -> :normal
+    end
+  end
+
+  defp risk_level(:diastolic, value) do
+    cond do
+      value >= 100 -> :danger
+      value >= 90 -> :warning
+      value >= 80 -> :caution
+      true -> :normal
+    end
+  end
+
+  defp risk_level(:pulse, value) do
+    cond do
+      value >= 120 -> :danger
+      value >= 100 -> :warning
+      value >= 90 -> :caution
+      value >= 60 -> :normal
+      true -> :caution
+    end
+  end
+
+  defp risk_label(:normal), do: "正常"
+  defp risk_label(:caution), do: "注意"
+  defp risk_label(:warning), do: "警戒"
+  defp risk_label(:danger), do: "危険"
+
+  defp risk_container_class(:normal), do: "border-emerald-300 bg-emerald-50"
+  defp risk_container_class(:caution), do: "border-amber-300 bg-amber-50"
+  defp risk_container_class(:warning), do: "border-orange-300 bg-orange-50"
+  defp risk_container_class(:danger), do: "border-rose-300 bg-rose-50"
+
+  defp risk_text_class(:normal), do: "text-emerald-700"
+  defp risk_text_class(:caution), do: "text-amber-700"
+  defp risk_text_class(:warning), do: "text-orange-700"
+  defp risk_text_class(:danger), do: "text-rose-700"
 
   defp blood_pressures_png(range) do
     BloodPressures.list_blood_pressures()
