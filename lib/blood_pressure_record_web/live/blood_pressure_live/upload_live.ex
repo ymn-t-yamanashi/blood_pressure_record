@@ -8,6 +8,7 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
   @impl Phoenix.LiveView
   def mount(_params, _session, socket) do
     graph_range = "all"
+    latest_blood_pressures = latest_blood_pressures()
 
     {:ok,
      socket
@@ -16,7 +17,8 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
      |> assign(:pending_image_data_url, nil)
      |> assign(:confirm_form, to_form(%{"measured_at_date" => ""}, as: :confirm))
      |> assign(:graph_range, graph_range)
-     |> assign(:latest_blood_pressures, latest_blood_pressures())
+     |> assign(:latest_blood_pressures, latest_blood_pressures)
+     |> assign(:latest_averages, latest_averages(latest_blood_pressures))
      |> assign(:blood_pressures_png, blood_pressures_png(graph_range))
      |> allow_upload(:avatar,
        accept: ~w(.jpg .jpeg),
@@ -151,13 +153,16 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
   defp save_blood_pressure(socket, blood_pressure_params) do
     case BloodPressures.create_blood_pressure(blood_pressure_params) do
       {:ok, _} ->
+        latest_blood_pressures = latest_blood_pressures()
+
         {:noreply,
          socket
          |> put_flash(:info, "Blood pressure created successfully")
          |> assign(:pending_blood_pressure, nil)
          |> assign(:pending_image_data_url, nil)
          |> assign(:confirm_form, to_form(%{"measured_at_date" => ""}, as: :confirm))
-         |> assign(:latest_blood_pressures, latest_blood_pressures())
+         |> assign(:latest_blood_pressures, latest_blood_pressures)
+         |> assign(:latest_averages, latest_averages(latest_blood_pressures))
          |> assign(:blood_pressures_png, blood_pressures_png(socket.assigns.graph_range))}
 
       {:error, %Ecto.Changeset{}} ->
@@ -196,6 +201,25 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
 
   defp latest_blood_pressures do
     BloodPressures.list_blood_pressures(page: 1, per_page: 10)
+  end
+
+  defp latest_averages([]), do: %{systolic: nil, diastolic: nil, pulse: nil}
+
+  defp latest_averages(blood_pressures) do
+    count = length(blood_pressures)
+
+    %{
+      systolic: average(count, Enum.map(blood_pressures, & &1.systolic)),
+      diastolic: average(count, Enum.map(blood_pressures, & &1.diastolic)),
+      pulse: average(count, Enum.map(blood_pressures, & &1.pulse))
+    }
+  end
+
+  defp average(count, values) do
+    values
+    |> Enum.sum()
+    |> Kernel./(count)
+    |> Float.round(1)
   end
 
   defp blood_pressures_png(range) do
