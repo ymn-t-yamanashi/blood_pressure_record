@@ -82,17 +82,7 @@
         </section>
       <% else %>
         <div>
-          <section
-            phx-drop-target={@uploads.avatar.ref}
-            class="flex h-[108px] w-full items-center justify-center rounded-xl border-2 border-dashed border-zinc-300 bg-zinc-50 text-center transition hover:border-zinc-400 hover:bg-zinc-100"
-          >
-            <div class="space-y-2">
-              <p class="text-base font-semibold text-zinc-700">ここに画像をドラッグ＆ドロップ</p>
-              <p class="text-sm text-zinc-500">.jpg / .jpeg のみ対応</p>
-            </div>
-          </section>
-
-          <section phx-drop-target={@uploads.avatar.ref} class="mt-4">
+          <section class="mt-4">
             <%!-- render each avatar entry --%>
             <article :for={entry <- @uploads.avatar.entries} class="upload-entry">
               <p class="text-sm text-zinc-600">{entry.client_name}</p>
