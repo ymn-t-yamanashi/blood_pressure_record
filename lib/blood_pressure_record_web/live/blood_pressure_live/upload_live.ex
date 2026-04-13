@@ -7,14 +7,17 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
 
   @impl Phoenix.LiveView
   def mount(_params, _session, socket) do
+    graph_range = "all"
+
     {:ok,
      socket
      |> assign(:uploaded_files, [])
      |> assign(:pending_blood_pressure, nil)
      |> assign(:pending_image_data_url, nil)
      |> assign(:confirm_form, to_form(%{"measured_at_date" => ""}, as: :confirm))
+     |> assign(:graph_range, graph_range)
      |> assign(:latest_blood_pressures, latest_blood_pressures())
-     |> assign(:blood_pressures_png, blood_pressures_png())
+     |> assign(:blood_pressures_png, blood_pressures_png(graph_range))
      |> allow_upload(:avatar,
        accept: ~w(.jpg .jpeg),
        max_entries: 1,
@@ -82,6 +85,17 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
      |> assign(:confirm_form, to_form(%{"measured_at_date" => ""}, as: :confirm))}
   end
 
+  @impl Phoenix.LiveView
+  def handle_event("change-graph-range", %{"range" => range}, socket)
+      when range in ["all", "recent_two_months"] do
+    {:noreply,
+     socket
+     |> assign(:graph_range, range)
+     |> assign(:blood_pressures_png, blood_pressures_png(range))}
+  end
+
+  def handle_event("change-graph-range", _params, socket), do: {:noreply, socket}
+
   def run(file) do
     client = Ollama.init()
 
@@ -144,7 +158,7 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
          |> assign(:pending_image_data_url, nil)
          |> assign(:confirm_form, to_form(%{"measured_at_date" => ""}, as: :confirm))
          |> assign(:latest_blood_pressures, latest_blood_pressures())
-         |> assign(:blood_pressures_png, blood_pressures_png())}
+         |> assign(:blood_pressures_png, blood_pressures_png(socket.assigns.graph_range))}
 
       {:error, %Ecto.Changeset{}} ->
         {:noreply, put_flash(socket, :error, "保存に失敗しました")}
@@ -184,9 +198,23 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
     BloodPressures.list_blood_pressures(page: 1, per_page: 10)
   end
 
-  defp blood_pressures_png do
+  defp blood_pressures_png(range) do
     BloodPressures.list_blood_pressures()
+    |> filter_for_graph_range(range)
     |> BloodPressureGraphComponent.build_png(width: 1200, height: 800)
+  end
+
+  defp filter_for_graph_range(blood_pressures, "all"), do: blood_pressures
+
+  defp filter_for_graph_range(blood_pressures, "recent_two_months") do
+    cutoff = Date.add(Date.utc_today(), -60)
+
+    Enum.filter(blood_pressures, fn blood_pressure ->
+      blood_pressure.measured_at
+      |> NaiveDateTime.to_date()
+      |> Date.compare(cutoff)
+      |> Kernel.!=(:lt)
+    end)
   end
 
   defp error_to_string(:too_large), do: "Too large"

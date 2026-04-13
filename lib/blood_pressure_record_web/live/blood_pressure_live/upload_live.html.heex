@@ -154,7 +154,41 @@
     </div>
 
     <div class="flex flex-col">
-      <h3 class="text-base font-semibold text-zinc-800">グラフ</h3>
+      <div class="flex items-center justify-between gap-2">
+        <h3 class="text-base font-semibold text-zinc-800">グラフ</h3>
+        <div id="graph-range-switch" class="inline-flex rounded-md border border-zinc-300 p-1">
+          <button
+            id="graph-range-all-button"
+            type="button"
+            phx-click="change-graph-range"
+            phx-value-range="all"
+            class={[
+              "rounded px-2 py-1 text-xs font-medium transition",
+              if(@graph_range == "all",
+                do: "bg-zinc-800 text-white",
+                else: "text-zinc-600 hover:bg-zinc-100"
+              )
+            ]}
+          >
+            全期間
+          </button>
+          <button
+            id="graph-range-recent-two-months-button"
+            type="button"
+            phx-click="change-graph-range"
+            phx-value-range="recent_two_months"
+            class={[
+              "rounded px-2 py-1 text-xs font-medium transition",
+              if(@graph_range == "recent_two_months",
+                do: "bg-zinc-800 text-white",
+                else: "text-zinc-600 hover:bg-zinc-100"
+              )
+            ]}
+          >
+            直近2ヶ月
+          </button>
+        </div>
+      </div>
       <div class="mt-3 flex flex-1 items-center justify-center rounded-xl border border-zinc-200 bg-white p-3">
         <.blood_pressure_graph
           png={@blood_pressures_png}
