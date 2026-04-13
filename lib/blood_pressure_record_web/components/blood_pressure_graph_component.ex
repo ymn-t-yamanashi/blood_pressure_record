@@ -33,19 +33,35 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
   end
 
   defp draw_graph(data, width, height) do
+    line_chart =
+      Vl.new()
+      |> Vl.data_from_values(data)
+      |> Vl.mark(:line, point: true)
+      |> Vl.encode_field(:x, "date",
+        type: :temporal,
+        title: "測定日",
+        axis: [
+          format: "%Y/%m/%d",
+          tickCount: "day"
+        ]
+      )
+      |> Vl.encode_field(:y, "value", type: :quantitative, title: "値 (mmHg または 拍/分)")
+      |> Vl.encode_field(:color, "type", type: :nominal, title: "測定項目")
+
+    systolic_threshold =
+      Vl.new()
+      |> Vl.data_from_values([%{threshold: 120}])
+      |> Vl.mark(:rule, color: "#facc15", stroke_width: 2, stroke_dash: [10, 6])
+      |> Vl.encode_field(:y, "threshold", type: :quantitative)
+
+    diastolic_threshold =
+      Vl.new()
+      |> Vl.data_from_values([%{threshold: 70}])
+      |> Vl.mark(:rule, color: "#facc15", stroke_width: 2, stroke_dash: [10, 6])
+      |> Vl.encode_field(:y, "threshold", type: :quantitative)
+
     Vl.new(width: width, height: height)
-    |> Vl.data_from_values(data)
-    |> Vl.mark(:line, point: true)
-    |> Vl.encode_field(:x, "date",
-      type: :temporal,
-      title: "測定日",
-      axis: [
-        format: "%Y/%m/%d",
-        tickCount: "day"
-      ]
-    )
-    |> Vl.encode_field(:y, "value", type: :quantitative, title: "値 (mmHg または 拍/分)")
-    |> Vl.encode_field(:color, "type", type: :nominal, title: "測定項目")
+    |> Vl.layers([line_chart, systolic_threshold, diastolic_threshold])
     |> VlConvert.to_png()
     |> Base.encode64()
   end
