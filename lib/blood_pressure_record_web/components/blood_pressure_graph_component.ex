@@ -45,20 +45,24 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
           tickCount: "day"
         ]
       )
-      |> Vl.encode_field(:y, "value", type: :quantitative, title: "値 (mmHg または 拍/分)")
+      |> Vl.encode_field(:y, "value",
+        type: :quantitative,
+        title: "値 (mmHg または 拍/分)",
+        scale: [domain_min: 50]
+      )
       |> Vl.encode_field(:color, "type", type: :nominal, title: "測定項目")
 
     systolic_threshold =
       Vl.new()
       |> Vl.data_from_values([%{threshold: 120}])
       |> Vl.mark(:rule, color: "#facc15", stroke_width: 2, stroke_dash: [10, 6])
-      |> Vl.encode_field(:y, "threshold", type: :quantitative)
+      |> Vl.encode_field(:y, "threshold", type: :quantitative, scale: [domain_min: 50])
 
     diastolic_threshold =
       Vl.new()
       |> Vl.data_from_values([%{threshold: 70}])
       |> Vl.mark(:rule, color: "#facc15", stroke_width: 2, stroke_dash: [10, 6])
-      |> Vl.encode_field(:y, "threshold", type: :quantitative)
+      |> Vl.encode_field(:y, "threshold", type: :quantitative, scale: [domain_min: 50])
 
     Vl.new(width: width, height: height)
     |> Vl.layers([line_chart, systolic_threshold, diastolic_threshold])
