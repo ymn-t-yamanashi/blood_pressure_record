@@ -33,6 +33,8 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
   end
 
   defp draw_graph(data, width, height) do
+    month_first_dates = month_first_dates(data)
+
     line_chart =
       Vl.new()
       |> Vl.data_from_values(data)
@@ -42,7 +44,10 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
         title: "測定日",
         axis: [
           format: "%Y/%m/%d",
-          tickCount: "day"
+          values: month_first_dates,
+          grid: true,
+          grid_color: "#d4d4d8",
+          grid_opacity: 0.5
         ]
       )
       |> Vl.encode_field(:y, "value",
@@ -68,5 +73,31 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
     |> Vl.layers([line_chart, systolic_threshold, diastolic_threshold])
     |> VlConvert.to_png()
     |> Base.encode64()
+  end
+
+  defp month_first_dates([]), do: []
+
+  defp month_first_dates(data) do
+    dates = Enum.map(data, & &1.date)
+    {min_date, max_date} = Enum.min_max_by(dates, &Date.to_gregorian_days/1)
+
+    first_month = %Date{year: min_date.year, month: min_date.month, day: 1}
+    last_month = %Date{year: max_date.year, month: max_date.month, day: 1}
+
+    Stream.unfold(first_month, fn current ->
+      if Date.compare(current, last_month) == :gt do
+        nil
+      else
+        next_month =
+          if current.month == 12 do
+            %Date{year: current.year + 1, month: 1, day: 1}
+          else
+            %{current | month: current.month + 1}
+          end
+
+        {current, next_month}
+      end
+    end)
+    |> Enum.to_list()
   end
 end
