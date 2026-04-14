@@ -7,7 +7,7 @@
       for={@uploads.avatar.ref}
       class="inline-flex h-6 w-36 cursor-pointer items-center justify-center rounded-md bg-zinc-800 px-3 text-sm font-medium text-white transition hover:bg-zinc-700"
     >
-      アップロード
+      AIで記録
     </label>
   </form>
 
@@ -151,7 +151,7 @@
       <div id="latest-averages" class="mt-2 grid grid-cols-3 gap-2 text-xs">
         <div class={["rounded-lg border px-2 py-1", @latest_averages.systolic.container_class]}>
           <div class="flex items-center justify-between">
-            <span class="text-zinc-700">最高</span>
+            <span class="text-zinc-700">最高血圧</span>
             <span class={["font-semibold", @latest_averages.systolic.text_class]}>
               {@latest_averages.systolic.level_text}
             </span>
@@ -162,7 +162,7 @@
         </div>
         <div class={["rounded-lg border px-2 py-1", @latest_averages.diastolic.container_class]}>
           <div class="flex items-center justify-between">
-            <span class="text-zinc-700">最低</span>
+            <span class="text-zinc-700">最低血圧</span>
             <span class={["font-semibold", @latest_averages.diastolic.text_class]}>
               {@latest_averages.diastolic.level_text}
             </span>
@@ -205,10 +205,10 @@
         <table class="min-w-full divide-y divide-zinc-200 text-sm">
           <thead class="bg-zinc-50 text-zinc-600">
             <tr>
-              <th class="px-3 py-2 text-left font-medium">Measured at</th>
-              <th class="px-3 py-2 text-left font-medium">Systolic</th>
-              <th class="px-3 py-2 text-left font-medium">Diastolic</th>
-              <th class="px-3 py-2 text-left font-medium">Pulse</th>
+              <th class="px-3 py-2 text-left font-medium">測定日</th>
+              <th class="px-3 py-2 text-left font-medium">最高血圧</th>
+              <th class="px-3 py-2 text-left font-medium">最低血圧</th>
+              <th class="px-3 py-2 text-left font-medium">脈拍</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-zinc-100 bg-white text-zinc-800">
