@@ -108,7 +108,46 @@
     </div>
 
     <div>
-      <h3 class="text-base font-semibold text-zinc-800">最新15件</h3>
+      <div
+        id="latest-pagination"
+        class="flex items-center justify-between text-xs text-zinc-600"
+      >
+        <span>全{@latest_total_count}件 / {@latest_page} / {@latest_total_pages}ページ</span>
+        <div class="inline-flex items-center gap-2">
+          <button
+            id="latest-page-prev-button"
+            type="button"
+            phx-click="change-latest-page"
+            phx-value-page={@latest_page - 1}
+            disabled={@latest_page <= 1}
+            class={[
+              "rounded border px-2 py-1 transition",
+              if(@latest_page <= 1,
+                do: "cursor-not-allowed border-zinc-200 text-zinc-400",
+                else: "border-zinc-300 text-zinc-700 hover:bg-zinc-100"
+              )
+            ]}
+          >
+            前へ
+          </button>
+          <button
+            id="latest-page-next-button"
+            type="button"
+            phx-click="change-latest-page"
+            phx-value-page={@latest_page + 1}
+            disabled={@latest_page >= @latest_total_pages}
+            class={[
+              "rounded border px-2 py-1 transition",
+              if(@latest_page >= @latest_total_pages,
+                do: "cursor-not-allowed border-zinc-200 text-zinc-400",
+                else: "border-zinc-300 text-zinc-700 hover:bg-zinc-100"
+              )
+            ]}
+          >
+            次へ
+          </button>
+        </div>
+      </div>
       <div id="latest-averages" class="mt-2 grid grid-cols-3 gap-2 text-xs">
         <div class={["rounded-lg border px-2 py-1", @latest_averages.systolic.container_class]}>
           <div class="flex items-center justify-between">

@@ -4,11 +4,15 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
   alias BloodPressureRecordWeb.BloodPressureGraphComponent
   alias Evision, as: Ev
   alias Evision.ColorConversionCodes, as: Evc
+  @latest_per_page 15
 
   @impl Phoenix.LiveView
   def mount(_params, _session, socket) do
     graph_range = "all"
-    latest_blood_pressures = latest_blood_pressures()
+    latest_page = 1
+    latest_total_count = BloodPressures.count_blood_pressures()
+    latest_total_pages = total_pages(latest_total_count, @latest_per_page)
+    latest_blood_pressures = latest_blood_pressures(latest_page)
 
     {:ok,
      socket
@@ -17,6 +21,9 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
      |> assign(:pending_image_data_url, nil)
      |> assign(:confirm_form, to_form(%{"measured_at_date" => ""}, as: :confirm))
      |> assign(:graph_range, graph_range)
+     |> assign(:latest_page, latest_page)
+     |> assign(:latest_total_pages, latest_total_pages)
+     |> assign(:latest_total_count, latest_total_count)
      |> assign(:latest_blood_pressures, latest_blood_pressures)
      |> assign(:latest_averages, latest_averages(latest_blood_pressures))
      |> assign(:blood_pressures_png, blood_pressures_png(graph_range))
@@ -98,6 +105,16 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
 
   def handle_event("change-graph-range", _params, socket), do: {:noreply, socket}
 
+  @impl Phoenix.LiveView
+  def handle_event("change-latest-page", %{"page" => page_value}, socket) do
+    with {page, ""} <- Integer.parse(page_value),
+         true <- page > 0 do
+      {:noreply, refresh_latest_section(socket, page)}
+    else
+      _ -> {:noreply, socket}
+    end
+  end
+
   def run(file) do
     client = Ollama.init()
 
@@ -153,16 +170,13 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
   defp save_blood_pressure(socket, blood_pressure_params) do
     case BloodPressures.create_blood_pressure(blood_pressure_params) do
       {:ok, _} ->
-        latest_blood_pressures = latest_blood_pressures()
-
         {:noreply,
          socket
          |> put_flash(:info, "Blood pressure created successfully")
          |> assign(:pending_blood_pressure, nil)
          |> assign(:pending_image_data_url, nil)
          |> assign(:confirm_form, to_form(%{"measured_at_date" => ""}, as: :confirm))
-         |> assign(:latest_blood_pressures, latest_blood_pressures)
-         |> assign(:latest_averages, latest_averages(latest_blood_pressures))
+         |> refresh_latest_section(socket.assigns.latest_page)
          |> assign(:blood_pressures_png, blood_pressures_png(socket.assigns.graph_range))}
 
       {:error, %Ecto.Changeset{}} ->
@@ -199,8 +213,8 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
     |> DateTime.to_naive()
   end
 
-  defp latest_blood_pressures do
-    BloodPressures.list_blood_pressures(page: 1, per_page: 15)
+  defp latest_blood_pressures(page) do
+    BloodPressures.list_blood_pressures(page: page, per_page: @latest_per_page)
   end
 
   defp latest_averages([]) do
@@ -239,6 +253,23 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
     |> Kernel./(count)
     |> Float.round(1)
   end
+
+  defp refresh_latest_section(socket, requested_page) do
+    latest_total_count = BloodPressures.count_blood_pressures()
+    latest_total_pages = total_pages(latest_total_count, @latest_per_page)
+    latest_page = min(requested_page, latest_total_pages)
+    latest_blood_pressures = latest_blood_pressures(latest_page)
+
+    socket
+    |> assign(:latest_page, latest_page)
+    |> assign(:latest_total_pages, latest_total_pages)
+    |> assign(:latest_total_count, latest_total_count)
+    |> assign(:latest_blood_pressures, latest_blood_pressures)
+    |> assign(:latest_averages, latest_averages(latest_blood_pressures))
+  end
+
+  defp total_pages(0, _per_page), do: 1
+  defp total_pages(total_count, per_page), do: div(total_count + per_page - 1, per_page)
 
   defp empty_metric do
     %{
