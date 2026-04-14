@@ -9,6 +9,7 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
   @impl Phoenix.LiveView
   def mount(_params, _session, socket) do
     graph_range = "all"
+    graph_sync_latest_page = false
     latest_page = 1
     latest_total_count = BloodPressures.count_blood_pressures()
     latest_total_pages = total_pages(latest_total_count, @latest_per_page)
@@ -21,6 +22,7 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
      |> assign(:pending_image_data_url, nil)
      |> assign(:confirm_form, to_form(%{"measured_at_date" => ""}, as: :confirm))
      |> assign(:graph_range, graph_range)
+     |> assign(:graph_sync_latest_page, graph_sync_latest_page)
      |> assign(:latest_page, latest_page)
      |> assign(:latest_total_pages, latest_total_pages)
      |> assign(:latest_total_count, latest_total_count)
@@ -97,19 +99,36 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
   @impl Phoenix.LiveView
   def handle_event("change-graph-range", %{"range" => range}, socket)
       when range in ["all", "recent_two_months"] do
-    {:noreply,
-     socket
-     |> assign(:graph_range, range)
-     |> assign(:blood_pressures_png, blood_pressures_png(range))}
+    socket =
+      if socket.assigns.graph_sync_latest_page do
+        socket
+      else
+        socket
+        |> assign(:graph_range, range)
+        |> maybe_refresh_graph_for_mode()
+      end
+
+    {:noreply, socket}
   end
 
   def handle_event("change-graph-range", _params, socket), do: {:noreply, socket}
 
   @impl Phoenix.LiveView
+  def handle_event("toggle-graph-sync-mode", _params, socket) do
+    {:noreply,
+     socket
+     |> assign(:graph_sync_latest_page, !socket.assigns.graph_sync_latest_page)
+     |> maybe_refresh_graph_for_mode()}
+  end
+
+  @impl Phoenix.LiveView
   def handle_event("change-latest-page", %{"page" => page_value}, socket) do
     with {page, ""} <- Integer.parse(page_value),
          true <- page > 0 do
-      {:noreply, refresh_latest_section(socket, page)}
+      {:noreply,
+       socket
+       |> refresh_latest_section(page)
+       |> maybe_refresh_graph_for_mode()}
     else
       _ -> {:noreply, socket}
     end
@@ -177,7 +196,7 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
          |> assign(:pending_image_data_url, nil)
          |> assign(:confirm_form, to_form(%{"measured_at_date" => ""}, as: :confirm))
          |> refresh_latest_section(socket.assigns.latest_page)
-         |> assign(:blood_pressures_png, blood_pressures_png(socket.assigns.graph_range))}
+         |> maybe_refresh_graph_for_mode()}
 
       {:error, %Ecto.Changeset{}} ->
         {:noreply, put_flash(socket, :error, "保存に失敗しました")}
@@ -270,6 +289,19 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
 
   defp total_pages(0, _per_page), do: 1
   defp total_pages(total_count, per_page), do: div(total_count + per_page - 1, per_page)
+
+  defp graph_png_for_mode(socket) do
+    if socket.assigns.graph_sync_latest_page do
+      socket.assigns.latest_blood_pressures
+      |> BloodPressureGraphComponent.build_png(width: 1200, height: 800)
+    else
+      blood_pressures_png(socket.assigns.graph_range)
+    end
+  end
+
+  defp maybe_refresh_graph_for_mode(socket) do
+    assign(socket, :blood_pressures_png, graph_png_for_mode(socket))
+  end
 
   defp empty_metric do
     %{
