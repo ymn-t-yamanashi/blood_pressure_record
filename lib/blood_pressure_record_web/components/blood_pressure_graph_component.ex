@@ -4,6 +4,13 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
   alias VegaLite, as: Vl
   alias VegaLite.Convert, as: VlConvert
 
+  @metric_options [
+    {"systolic", "最高血圧"},
+    {"diastolic", "最低血圧"},
+    {"pulse", "脈拍"}
+  ]
+  @default_visible_metrics ["systolic", "diastolic"]
+
   attr :png, :string, required: true
   attr :class, :string, default: nil
 
@@ -16,11 +23,26 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
   def build_png(blood_pressures, opts \\ []) do
     width = Keyword.get(opts, :width, 600)
     height = Keyword.get(opts, :height, 400)
+    visible_metrics = Keyword.get(opts, :visible_metrics, @default_visible_metrics)
 
     blood_pressures
     |> Enum.flat_map(&to_graph_data/1)
+    |> Enum.filter(&visible_metric?(&1.type, visible_metrics))
     |> draw_graph(width, height)
   end
+
+  def metric_options, do: @metric_options
+  def default_visible_metrics, do: @default_visible_metrics
+
+  def normalize_visible_metrics(metrics) when is_list(metrics) do
+    valid_metrics = Enum.map(@metric_options, fn {metric, _label} -> metric end)
+
+    metrics
+    |> Enum.uniq()
+    |> Enum.filter(&(&1 in valid_metrics))
+  end
+
+  def normalize_visible_metrics(_metrics), do: []
 
   defp to_graph_data(data) do
     date = NaiveDateTime.to_date(data.measured_at)
@@ -144,4 +166,8 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
   end
 
   defp fifteen_day_bucket(date, min_date), do: div(Date.diff(date, min_date), 15)
+
+  defp visible_metric?("最高血圧", visible_metrics), do: "systolic" in visible_metrics
+  defp visible_metric?("最低血圧", visible_metrics), do: "diastolic" in visible_metrics
+  defp visible_metric?("脈拍", visible_metrics), do: "pulse" in visible_metrics
 end

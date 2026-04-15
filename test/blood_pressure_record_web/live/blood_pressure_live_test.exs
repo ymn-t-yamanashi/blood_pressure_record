@@ -123,4 +123,58 @@ defmodule BloodPressureRecordWeb.BloodPressureLiveTest do
       assert html =~ "Blood pressure updated successfully"
     end
   end
+
+  describe "Graph" do
+    setup [:create_blood_pressure]
+
+    test "shows systolic and diastolic by default", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/graph")
+
+      assert has_element?(view, "#graph-visibility-form")
+      assert has_element?(view, "#visibility-systolic[checked]")
+      assert has_element?(view, "#visibility-diastolic[checked]")
+      refute has_element?(view, "#visibility-pulse[checked]")
+      assert has_element?(view, "img")
+    end
+
+    test "updates visible metrics from the form", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/graph")
+
+      view
+      |> form("#graph-visibility-form", %{"visibility" => ["pulse"]})
+      |> render_change()
+
+      refute has_element?(view, "#visibility-systolic[checked]")
+      refute has_element?(view, "#visibility-diastolic[checked]")
+      assert has_element?(view, "#visibility-pulse[checked]")
+      assert has_element?(view, "img")
+    end
+  end
+
+  describe "Upload graph" do
+    setup [:create_blood_pressure]
+
+    test "shows systolic and diastolic by default", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/")
+
+      assert has_element?(view, "#upload-graph-visibility-form")
+      assert has_element?(view, "#upload-visibility-systolic[checked]")
+      assert has_element?(view, "#upload-visibility-diastolic[checked]")
+      refute has_element?(view, "#upload-visibility-pulse[checked]")
+      assert has_element?(view, "img")
+    end
+
+    test "updates visible metrics from the form", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/")
+
+      view
+      |> form("#upload-graph-visibility-form", %{"visibility" => ["pulse"]})
+      |> render_change()
+
+      refute has_element?(view, "#upload-visibility-systolic[checked]")
+      refute has_element?(view, "#upload-visibility-diastolic[checked]")
+      assert has_element?(view, "#upload-visibility-pulse[checked]")
+      assert has_element?(view, "img")
+    end
+  end
 end

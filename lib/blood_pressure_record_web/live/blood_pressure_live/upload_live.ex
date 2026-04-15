@@ -10,6 +10,7 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
   def mount(_params, _session, socket) do
     graph_range = "all"
     graph_sync_latest_page = false
+    visible_metrics = BloodPressureGraphComponent.default_visible_metrics()
     latest_page = 1
     latest_total_count = BloodPressures.count_blood_pressures()
     latest_total_pages = total_pages(latest_total_count, @latest_per_page)
@@ -23,12 +24,15 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
      |> assign(:confirm_form, to_form(%{"measured_at_date" => ""}, as: :confirm))
      |> assign(:graph_range, graph_range)
      |> assign(:graph_sync_latest_page, graph_sync_latest_page)
+     |> assign(:graph_metric_options, BloodPressureGraphComponent.metric_options())
+     |> assign(:visible_metrics, visible_metrics)
+     |> assign(:graph_visibility_form, to_form(%{"visibility" => visible_metrics}, as: :graph))
      |> assign(:latest_page, latest_page)
      |> assign(:latest_total_pages, latest_total_pages)
      |> assign(:latest_total_count, latest_total_count)
      |> assign(:latest_blood_pressures, latest_blood_pressures)
      |> assign(:latest_averages, latest_averages(latest_blood_pressures))
-     |> assign(:blood_pressures_png, blood_pressures_png(graph_range))
+     |> assign(:blood_pressures_png, blood_pressures_png(graph_range, visible_metrics))
      |> allow_upload(:avatar,
        accept: ~w(.jpg .jpeg),
        max_entries: 1,
@@ -112,6 +116,27 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
   end
 
   def handle_event("change-graph-range", _params, socket), do: {:noreply, socket}
+
+  @impl Phoenix.LiveView
+  def handle_event("update-graph-visibility", %{"visibility" => visible_metrics}, socket) do
+    visible_metrics = BloodPressureGraphComponent.normalize_visible_metrics(visible_metrics)
+
+    {:noreply,
+     socket
+     |> assign(:visible_metrics, visible_metrics)
+     |> assign(:graph_visibility_form, to_form(%{"visibility" => visible_metrics}, as: :graph))
+     |> maybe_refresh_graph_for_mode()}
+  end
+
+  def handle_event("update-graph-visibility", _params, socket) do
+    visible_metrics = []
+
+    {:noreply,
+     socket
+     |> assign(:visible_metrics, visible_metrics)
+     |> assign(:graph_visibility_form, to_form(%{"visibility" => visible_metrics}, as: :graph))
+     |> maybe_refresh_graph_for_mode()}
+  end
 
   @impl Phoenix.LiveView
   def handle_event("toggle-graph-sync-mode", _params, socket) do
@@ -293,9 +318,13 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
   defp graph_png_for_mode(socket) do
     if socket.assigns.graph_sync_latest_page do
       socket.assigns.latest_blood_pressures
-      |> BloodPressureGraphComponent.build_png(width: 1200, height: 800)
+      |> BloodPressureGraphComponent.build_png(
+        width: 1200,
+        height: 800,
+        visible_metrics: socket.assigns.visible_metrics
+      )
     else
-      blood_pressures_png(socket.assigns.graph_range)
+      blood_pressures_png(socket.assigns.graph_range, socket.assigns.visible_metrics)
     end
   end
 
@@ -366,10 +395,14 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
   defp risk_text_class(:warning), do: "text-orange-700"
   defp risk_text_class(:danger), do: "text-rose-700"
 
-  defp blood_pressures_png(range) do
+  defp blood_pressures_png(range, visible_metrics) do
     BloodPressures.list_blood_pressures()
     |> filter_for_graph_range(range)
-    |> BloodPressureGraphComponent.build_png(width: 1200, height: 800)
+    |> BloodPressureGraphComponent.build_png(
+      width: 1200,
+      height: 800,
+      visible_metrics: visible_metrics
+    )
   end
 
   defp filter_for_graph_range(blood_pressures, "all"), do: blood_pressures
