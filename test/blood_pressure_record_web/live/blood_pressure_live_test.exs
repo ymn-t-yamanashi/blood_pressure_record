@@ -176,5 +176,21 @@ defmodule BloodPressureRecordWeb.BloodPressureLiveTest do
       assert has_element?(view, "#upload-visibility-pulse[checked]")
       assert has_element?(view, "img")
     end
+
+    test "high risk cells are highlighted in the latest table", %{conn: conn} do
+      blood_pressure =
+        blood_pressure_fixture(%{
+          systolic: 168,
+          diastolic: 104,
+          pulse: 124,
+          measured_at: ~N[2025-12-02 02:55:00]
+        })
+
+      {:ok, view, _html} = live(conn, ~p"/")
+
+      assert has_element?(view, "td.bg-rose-50", Integer.to_string(blood_pressure.systolic))
+      assert has_element?(view, "td.bg-rose-50", Integer.to_string(blood_pressure.diastolic))
+      assert has_element?(view, "td.bg-rose-50", Integer.to_string(blood_pressure.pulse))
+    end
   end
 end

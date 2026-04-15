@@ -214,9 +214,13 @@
           <tbody class="divide-y divide-zinc-100 bg-white text-zinc-800">
             <tr :for={bp <- @latest_blood_pressures}>
               <td class="px-3 py-2">{Calendar.strftime(bp.measured_at, "%Y/%m/%d")}</td>
-              <td class="px-3 py-2">{bp.systolic}</td>
-              <td class="px-3 py-2">{bp.diastolic}</td>
-              <td class="px-3 py-2">{bp.pulse}</td>
+              <td class={["px-3 py-2", risk_cell_class(:systolic, bp.systolic)]}>
+                {bp.systolic}
+              </td>
+              <td class={["px-3 py-2", risk_cell_class(:diastolic, bp.diastolic)]}>
+                {bp.diastolic}
+              </td>
+              <td class={["px-3 py-2", risk_cell_class(:pulse, bp.pulse)]}>{bp.pulse}</td>
             </tr>
           </tbody>
         </table>

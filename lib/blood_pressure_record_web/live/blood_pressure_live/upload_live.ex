@@ -395,6 +395,11 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
   defp risk_text_class(:warning), do: "text-orange-700"
   defp risk_text_class(:danger), do: "text-rose-700"
 
+  def risk_cell_class(metric, value) do
+    risk_level(metric, value)
+    |> risk_container_class()
+  end
+
   defp blood_pressures_png(range, visible_metrics) do
     BloodPressures.list_blood_pressures()
     |> filter_for_graph_range(range)
