@@ -11,6 +11,7 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
   ]
   @default_visible_metrics ["systolic", "diastolic"]
   @graph_series_modes ["actual", "average", "both"]
+  @graph_domain_min 50
   @metric_thresholds %{
     "systolic" => [
       %{value: 114, color: "#10b981"},
@@ -88,6 +89,9 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
           label_font_size: 28,
           title_font_size: 40,
           values: month_first_dates,
+          domain: true,
+          domain_color: "#52525b",
+          domain_width: 2,
           grid: true,
           grid_color: "#52525b",
           grid_opacity: 1.0
@@ -96,8 +100,15 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
       |> Vl.encode_field(:y, "value",
         type: :quantitative,
         title: nil,
-        scale: [domain_min: 50],
-        axis: [label_font_size: 28, title_font_size: 40]
+        scale: [domain_min: @graph_domain_min],
+        axis: [
+          label_font_size: 28,
+          title_font_size: 40,
+          grid: true,
+          grid_color: "#d4d4d8",
+          grid_opacity: 1.0,
+          tick_count: 24
+        ]
       )
       |> Vl.encode_field(:color, "type", type: :nominal, title: "測定項目")
 
@@ -105,7 +116,10 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
       Vl.new()
       |> Vl.data_from_values(thresholds)
       |> Vl.mark(:rule, stroke_width: 2, opacity: 0.75)
-      |> Vl.encode_field(:y, "threshold", type: :quantitative, scale: [domain_min: 50])
+      |> Vl.encode_field(:y, "threshold",
+        type: :quantitative,
+        scale: [domain_min: @graph_domain_min]
+      )
       |> Vl.encode_field(:color, "color",
         type: :nominal,
         legend: nil,
@@ -117,7 +131,7 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
       |> Vl.data_from_values(averages)
       |> Vl.mark(:line, stroke_width: 2, opacity: 0.85, point: [size: 20])
       |> Vl.encode_field(:x, "date", type: :temporal)
-      |> Vl.encode_field(:y, "value", type: :quantitative, scale: [domain_min: 50])
+      |> Vl.encode_field(:y, "value", type: :quantitative, scale: [domain_min: @graph_domain_min])
       |> Vl.encode_field(:color, "type", type: :nominal, title: "測定項目")
 
     layers =
@@ -137,10 +151,11 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
           padding: 10,
           offset: 8
         ],
-        axis: [label_limit: 240, grid: false],
+        axis: [label_limit: 240],
+        axis_x: [domain: true, domain_color: "#52525b", domain_width: 2, tick_color: "#52525b"],
         style: [guide_title: [font_size: 40], guide_label: [font_size: 28]],
         view: [stroke: :transparent],
-        padding: [top: 6, bottom: 2, left: 8, right: 8]
+        padding: [top: 6, bottom: 24, left: 8, right: 8]
       )
       |> Vl.layers(layers)
       |> VlConvert.to_svg()
