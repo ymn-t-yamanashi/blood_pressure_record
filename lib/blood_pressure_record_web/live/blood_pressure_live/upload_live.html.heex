@@ -19,7 +19,7 @@
         </form>
       </div>
 
-      <%= if @pending_blood_pressure do %>
+      <%= if @pending_measurement do %>
         <section
           id="parsed-values"
           class="rounded-xl border border-zinc-200 bg-zinc-50 p-2.5 lg:min-h-0 lg:flex-1 lg:overflow-auto"
@@ -29,12 +29,12 @@
             <img
               id="pending-upload-image"
               src={@pending_image_data_url}
-              alt="Uploaded blood pressure image"
+              alt="Uploaded measurement image"
               class="mt-1.5 h-24 w-24 rounded-lg border border-zinc-200 object-cover"
             />
           <% end %>
           <dl class="mt-1.5 grid grid-cols-2 gap-y-1 text-xs">
-            <dt class="text-zinc-500">Measured at</dt>
+            <dt class="text-zinc-500">測定日</dt>
             <dd class="font-medium text-zinc-900">
               <.form
                 for={@confirm_form}
@@ -48,12 +48,19 @@
                 />
               </.form>
             </dd>
-            <dt class="text-zinc-500">Systolic</dt>
-            <dd class="font-medium text-zinc-900">{@pending_blood_pressure.systolic}</dd>
-            <dt class="text-zinc-500">Diastolic</dt>
-            <dd class="font-medium text-zinc-900">{@pending_blood_pressure.diastolic}</dd>
-            <dt class="text-zinc-500">Pulse</dt>
-            <dd class="font-medium text-zinc-900">{@pending_blood_pressure.pulse}</dd>
+            <%= if @pending_measurement.type == :blood_pressure do %>
+              <dt class="text-zinc-500">最高血圧</dt>
+              <dd class="font-medium text-zinc-900">{@pending_measurement.systolic}</dd>
+              <dt class="text-zinc-500">最低血圧</dt>
+              <dd class="font-medium text-zinc-900">{@pending_measurement.diastolic}</dd>
+              <dt class="text-zinc-500">脈拍</dt>
+              <dd class="font-medium text-zinc-900">{@pending_measurement.pulse}</dd>
+            <% else %>
+              <dt class="text-zinc-500">体重</dt>
+              <dd id="pending-weight-value" class="font-medium text-zinc-900">
+                {format_weight(@pending_measurement.weight)}
+              </dd>
+            <% end %>
           </dl>
           <div class="mt-2 flex items-center gap-2">
             <button
@@ -77,15 +84,9 @@
       <% else %>
         <div>
           <section class="mt-2">
-            <%!-- render each avatar entry --%>
             <article :for={entry <- @uploads.avatar.entries} class="upload-entry">
               <p class="text-sm text-zinc-600">{entry.client_name}</p>
-
-              <%!-- entry.progress will update automatically for in-flight entries --%>
               <progress value={entry.progress} max="100">{entry.progress}% </progress>
-
-              <%!-- a regular click event whose handler will invoke Phoenix.LiveView.cancel_upload/3
-                                          --%>
               <button
                 type="button"
                 phx-click="cancel-upload"
@@ -94,17 +95,11 @@
               >
                 &times;
               </button>
-
-              <%!-- Phoenix.Component.upload_errors/2 returns a list of error atoms --%>
-              <p
-                :for={err <- upload_errors(@uploads.avatar, entry)}
-                class="alert alert-danger"
-              >
+              <p :for={err <- upload_errors(@uploads.avatar, entry)} class="alert alert-danger">
                 {error_to_string(err)}
               </p>
             </article>
 
-            <%!-- Phoenix.Component.upload_errors/1 returns a list of error atoms --%>
             <p :for={err <- upload_errors(@uploads.avatar)} class="alert alert-danger">
               {error_to_string(err)}
             </p>
@@ -118,7 +113,7 @@
         id="latest-pagination"
         class="flex items-center justify-between text-[11px] text-zinc-600"
       >
-        <span>全{@latest_total_count}件 / {@latest_page} / {@latest_total_pages}ページ</span>
+        <span>全{@latest_total_count}日 / {@latest_page} / {@latest_total_pages}ページ</span>
         <div class="inline-flex items-center gap-2">
           <button
             id="latest-page-prev-button"
@@ -154,7 +149,7 @@
           </button>
         </div>
       </div>
-      <div id="latest-averages" class="mt-1 grid grid-cols-3 gap-1 text-[10px]">
+      <div id="latest-averages" class="mt-1 grid grid-cols-2 gap-1 text-[10px] xl:grid-cols-4">
         <div class={["rounded-lg border px-2 py-1", @latest_averages.systolic.container_class]}>
           <div class="flex items-center justify-between">
             <span class="text-zinc-700">最高血圧</span>
@@ -163,7 +158,7 @@
             </span>
           </div>
           <div class="mt-0.5 text-[13px] font-semibold text-zinc-900">
-            {if(@latest_averages.systolic.value, do: @latest_averages.systolic.value, else: "-")}
+            {format_metric_value(@latest_averages.systolic.value)}
           </div>
         </div>
         <div class={["rounded-lg border px-2 py-1", @latest_averages.diastolic.container_class]}>
@@ -174,7 +169,7 @@
             </span>
           </div>
           <div class="mt-0.5 text-[13px] font-semibold text-zinc-900">
-            {if(@latest_averages.diastolic.value, do: @latest_averages.diastolic.value, else: "-")}
+            {format_metric_value(@latest_averages.diastolic.value)}
           </div>
         </div>
         <div class={["rounded-lg border px-2 py-1", @latest_averages.pulse.container_class]}>
@@ -185,7 +180,18 @@
             </span>
           </div>
           <div class="mt-0.5 text-[13px] font-semibold text-zinc-900">
-            {if(@latest_averages.pulse.value, do: @latest_averages.pulse.value, else: "-")}
+            {format_metric_value(@latest_averages.pulse.value)}
+          </div>
+        </div>
+        <div class={["rounded-lg border px-2 py-1", @latest_averages.weight.container_class]}>
+          <div class="flex items-center justify-between">
+            <span class="text-zinc-700">体重</span>
+            <span class={["font-semibold", @latest_averages.weight.text_class]}>
+              {@latest_averages.weight.level_text}
+            </span>
+          </div>
+          <div class="mt-0.5 text-[13px] font-semibold text-zinc-900">
+            {format_metric_value(@latest_averages.weight.value)}
           </div>
         </div>
       </div>
@@ -233,20 +239,50 @@
               <th class="px-3 py-1 text-left font-medium">最高血圧</th>
               <th class="px-3 py-1 text-left font-medium">最低血圧</th>
               <th class="px-3 py-1 text-left font-medium">脈拍</th>
+              <th class="px-3 py-1 text-left font-medium">体重(kg)</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-zinc-100 bg-white text-zinc-800">
-            <tr :for={bp <- @latest_blood_pressures}>
+            <tr :for={measurement <- @latest_daily_measurements}>
               <td class="bg-zinc-50 px-3 py-1">
-                {Calendar.strftime(bp.measured_at, "%Y/%m/%d")}
+                {Calendar.strftime(measurement.date, "%Y/%m/%d")}
               </td>
-              <td class={["px-3 py-1", risk_cell_class(:systolic, bp.systolic)]}>
-                {bp.systolic}
+              <td class={[
+                "px-3 py-1",
+                risk_cell_class(
+                  :systolic,
+                  measurement.blood_pressure && measurement.blood_pressure.systolic
+                )
+              ]}>
+                {if(measurement.blood_pressure,
+                  do: measurement.blood_pressure.systolic,
+                  else: "-"
+                )}
               </td>
-              <td class={["px-3 py-1", risk_cell_class(:diastolic, bp.diastolic)]}>
-                {bp.diastolic}
+              <td class={[
+                "px-3 py-1",
+                risk_cell_class(
+                  :diastolic,
+                  measurement.blood_pressure && measurement.blood_pressure.diastolic
+                )
+              ]}>
+                {if(measurement.blood_pressure,
+                  do: measurement.blood_pressure.diastolic,
+                  else: "-"
+                )}
               </td>
-              <td class={["px-3 py-1", risk_cell_class(:pulse, bp.pulse)]}>{bp.pulse}</td>
+              <td class={[
+                "px-3 py-1",
+                risk_cell_class(
+                  :pulse,
+                  measurement.blood_pressure && measurement.blood_pressure.pulse
+                )
+              ]}>
+                {if(measurement.blood_pressure, do: measurement.blood_pressure.pulse, else: "-")}
+              </td>
+              <td class="px-3 py-1">
+                {if(measurement.weight, do: format_weight(measurement.weight.weight), else: "-")}
+              </td>
             </tr>
           </tbody>
         </table>
@@ -415,10 +451,16 @@
         </div>
       </div>
       <div class="mt-1 flex items-center justify-center rounded-xl border border-zinc-200 bg-white p-1 lg:h-[calc(100vh-22rem)] lg:min-h-[520px] lg:max-h-[680px]">
-        <.blood_pressure_graph
-          image_data={@blood_pressures_image_data}
-          class="h-full w-full max-w-full object-contain"
-        />
+        <%= if @graph_has_data && @blood_pressures_image_data do %>
+          <.blood_pressure_graph
+            image_data={@blood_pressures_image_data}
+            class="h-full w-full max-w-full object-contain"
+          />
+        <% else %>
+          <div id="empty-graph-state" class="text-sm font-medium text-zinc-500">
+            データがありません
+          </div>
+        <% end %>
       </div>
     </div>
   </section>
