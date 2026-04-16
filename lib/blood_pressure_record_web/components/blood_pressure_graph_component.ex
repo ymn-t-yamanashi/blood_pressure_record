@@ -67,16 +67,19 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
         title: "測定日",
         axis: [
           format: "%Y/%m/%d",
+          label_font_size: 32,
+          title_font_size: 40,
           values: month_first_dates,
           grid: true,
-          grid_color: "#d4d4d8",
-          grid_opacity: 0.5
+          grid_color: "#52525b",
+          grid_opacity: 1.0
         ]
       )
       |> Vl.encode_field(:y, "value",
         type: :quantitative,
         title: "値 (mmHg または 拍/分)",
-        scale: [domain_min: 50]
+        scale: [domain_min: 50],
+        axis: [label_font_size: 32, title_font_size: 40]
       )
       |> Vl.encode_field(:color, "type", type: :nominal, title: "測定項目")
 
@@ -101,6 +104,17 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
       |> Vl.encode_field(:color, "type", type: :nominal, title: "測定項目")
 
     Vl.new(width: width, height: height)
+    |> Vl.config(
+      legend: [
+        label_font_size: 32,
+        title_font_size: 40,
+        symbol_size: 440,
+        padding: 16
+      ],
+      axis: [label_limit: 240],
+      style: [guide_title: [font_size: 40], guide_label: [font_size: 32]],
+      view: [stroke: :transparent]
+    )
     |> Vl.layers([line_chart, average_lines, systolic_threshold, diastolic_threshold])
     |> VlConvert.to_png()
     |> Base.encode64()
