@@ -346,7 +346,7 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
 
     %{
       value: value,
-      level_text: risk_label(level),
+      level_text: risk_label(metric, level),
       container_class: risk_container_class(level),
       text_class: risk_text_class(level)
     }
@@ -354,18 +354,17 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
 
   defp risk_level(:systolic, value) do
     cond do
-      value >= 160 -> :danger
-      value >= 140 -> :warning
-      value >= 120 -> :caution
+      value >= 135 -> :danger
+      value >= 125 -> :warning
+      value >= 115 -> :caution
       true -> :normal
     end
   end
 
   defp risk_level(:diastolic, value) do
     cond do
-      value >= 100 -> :danger
-      value >= 90 -> :warning
-      value >= 80 -> :caution
+      value >= 85 -> :danger
+      value >= 75 -> :warning
       true -> :normal
     end
   end
@@ -380,10 +379,19 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
     end
   end
 
-  defp risk_label(:normal), do: "正常"
-  defp risk_label(:caution), do: "注意"
-  defp risk_label(:warning), do: "警戒"
-  defp risk_label(:danger), do: "危険"
+  defp risk_label(metric, level) when metric in [:systolic, :diastolic] do
+    case level do
+      :normal -> "正常血圧"
+      :caution -> "正常高値血圧"
+      :warning -> "高値血圧"
+      :danger -> "高血圧"
+    end
+  end
+
+  defp risk_label(:pulse, :normal), do: "正常"
+  defp risk_label(:pulse, :caution), do: "注意"
+  defp risk_label(:pulse, :warning), do: "警戒"
+  defp risk_label(:pulse, :danger), do: "危険"
 
   defp risk_container_class(:normal), do: "border-emerald-200 bg-emerald-50"
   defp risk_container_class(:caution), do: "border-amber-200 bg-amber-50"

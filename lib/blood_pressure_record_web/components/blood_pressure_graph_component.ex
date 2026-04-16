@@ -12,14 +12,15 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
   @default_visible_metrics ["systolic", "diastolic"]
   @metric_thresholds %{
     "systolic" => [
-      %{value: 119, color: "#10b981"},
-      %{value: 140, color: "#f97316"},
-      %{value: 160, color: "#f43f5e"}
+      %{value: 114, color: "#10b981"},
+      %{value: 115, color: "#f59e0b"},
+      %{value: 125, color: "#f97316"},
+      %{value: 135, color: "#f43f5e"}
     ],
     "diastolic" => [
-      %{value: 79, color: "#10b981"},
-      %{value: 90, color: "#f97316"},
-      %{value: 100, color: "#f43f5e"}
+      %{value: 74, color: "#10b981"},
+      %{value: 75, color: "#f97316"},
+      %{value: 85, color: "#f43f5e"}
     ]
   }
 
