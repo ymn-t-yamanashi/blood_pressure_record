@@ -385,10 +385,10 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
   defp risk_label(:warning), do: "警戒"
   defp risk_label(:danger), do: "危険"
 
-  defp risk_container_class(:normal), do: "border-emerald-300 bg-emerald-50"
-  defp risk_container_class(:caution), do: "border-amber-300 bg-amber-50"
-  defp risk_container_class(:warning), do: "border-orange-300 bg-orange-50"
-  defp risk_container_class(:danger), do: "border-rose-300 bg-rose-50"
+  defp risk_container_class(:normal), do: "border-emerald-200 bg-emerald-50"
+  defp risk_container_class(:caution), do: "border-amber-200 bg-amber-50"
+  defp risk_container_class(:warning), do: "border-orange-400 bg-orange-200"
+  defp risk_container_class(:danger), do: "border-rose-500 bg-rose-300"
 
   defp risk_text_class(:normal), do: "text-emerald-700"
   defp risk_text_class(:caution), do: "text-amber-700"

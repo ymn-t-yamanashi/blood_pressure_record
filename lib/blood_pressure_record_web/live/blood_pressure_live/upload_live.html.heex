@@ -203,7 +203,7 @@
       </div>
       <div class="mt-3 rounded-xl border border-zinc-200">
         <table class="min-w-full divide-y divide-zinc-200 text-sm">
-          <thead class="bg-zinc-50 text-zinc-600">
+          <thead class="bg-zinc-100 text-zinc-600">
             <tr>
               <th class="px-3 py-2 text-left font-medium">測定日</th>
               <th class="px-3 py-2 text-left font-medium">最高血圧</th>
@@ -213,7 +213,9 @@
           </thead>
           <tbody class="divide-y divide-zinc-100 bg-white text-zinc-800">
             <tr :for={bp <- @latest_blood_pressures}>
-              <td class="px-3 py-2">{Calendar.strftime(bp.measured_at, "%Y/%m/%d")}</td>
+              <td class="bg-zinc-50 px-3 py-2">
+                {Calendar.strftime(bp.measured_at, "%Y/%m/%d")}
+              </td>
               <td class={["px-3 py-2", risk_cell_class(:systolic, bp.systolic)]}>
                 {bp.systolic}
               </td>

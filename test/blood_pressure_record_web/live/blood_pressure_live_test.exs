@@ -161,9 +161,9 @@ defmodule BloodPressureRecordWeb.BloodPressureLiveTest do
 
       {:ok, view, _html} = live(conn, ~p"/")
 
-      assert has_element?(view, "td.bg-rose-50", Integer.to_string(blood_pressure.systolic))
-      assert has_element?(view, "td.bg-rose-50", Integer.to_string(blood_pressure.diastolic))
-      assert has_element?(view, "td.bg-rose-50", Integer.to_string(blood_pressure.pulse))
+      assert has_element?(view, "td.bg-rose-300", Integer.to_string(blood_pressure.systolic))
+      assert has_element?(view, "td.bg-rose-300", Integer.to_string(blood_pressure.diastolic))
+      assert has_element?(view, "td.bg-rose-300", Integer.to_string(blood_pressure.pulse))
     end
   end
 end
