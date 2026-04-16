@@ -22,16 +22,16 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
     ]
   }
 
-  attr :png, :string, required: true
+  attr :image_data, :string, required: true
   attr :class, :string, default: nil
 
   def blood_pressure_graph(assigns) do
     ~H"""
-    <img src={"data:image/png;base64,#{@png}"} class={@class} />
+    <img src={@image_data} class={@class} />
     """
   end
 
-  def build_png(blood_pressures, opts \\ []) do
+  def build_image_data(blood_pressures, opts \\ []) do
     width = Keyword.get(opts, :width, 600)
     height = Keyword.get(opts, :height, 400)
     visible_metrics = Keyword.get(opts, :visible_metrics, @default_visible_metrics)
@@ -127,21 +127,23 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
         _ -> [line_chart, average_lines, threshold_lines]
       end
 
-    Vl.new(width: width, height: height)
-    |> Vl.config(
-      legend: [
-        label_font_size: 28,
-        title_font_size: 40,
-        symbol_size: 440,
-        padding: 16
-      ],
-      axis: [label_limit: 240],
-      style: [guide_title: [font_size: 40], guide_label: [font_size: 28]],
-      view: [stroke: :transparent]
-    )
-    |> Vl.layers(layers)
-    |> VlConvert.to_png()
-    |> Base.encode64()
+    svg =
+      Vl.new(width: width, height: height)
+      |> Vl.config(
+        legend: [
+          label_font_size: 28,
+          title_font_size: 40,
+          symbol_size: 440,
+          padding: 16
+        ],
+        axis: [label_limit: 240],
+        style: [guide_title: [font_size: 40], guide_label: [font_size: 28]],
+        view: [stroke: :transparent]
+      )
+      |> Vl.layers(layers)
+      |> VlConvert.to_svg()
+
+    "data:image/svg+xml;base64,#{Base.encode64(svg)}"
   end
 
   defp month_first_dates([]), do: []

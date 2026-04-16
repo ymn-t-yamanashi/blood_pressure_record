@@ -39,8 +39,8 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
      |> assign(:latest_blood_pressures, latest_blood_pressures)
      |> assign(:latest_averages, latest_averages(latest_blood_pressures))
      |> assign(
-       :blood_pressures_png,
-       blood_pressures_png(graph_range, visible_metrics, graph_series_mode)
+       :blood_pressures_image_data,
+       blood_pressures_image_data(graph_range, visible_metrics, graph_series_mode)
      )
      |> allow_upload(:avatar,
        accept: ~w(.jpg .jpeg),
@@ -347,14 +347,14 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
   defp graph_png_for_mode(socket) do
     if socket.assigns.graph_sync_latest_page do
       socket.assigns.latest_blood_pressures
-      |> BloodPressureGraphComponent.build_png(
+      |> BloodPressureGraphComponent.build_image_data(
         width: 1200,
         height: 800,
         visible_metrics: socket.assigns.visible_metrics,
         graph_series_mode: socket.assigns.graph_series_mode
       )
     else
-      blood_pressures_png(
+      blood_pressures_image_data(
         socket.assigns.graph_range,
         socket.assigns.visible_metrics,
         socket.assigns.graph_series_mode
@@ -363,7 +363,7 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
   end
 
   defp maybe_refresh_graph_for_mode(socket) do
-    assign(socket, :blood_pressures_png, graph_png_for_mode(socket))
+    assign(socket, :blood_pressures_image_data, graph_png_for_mode(socket))
   end
 
   defp empty_metric do
@@ -442,10 +442,10 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
     |> risk_container_class()
   end
 
-  defp blood_pressures_png(range, visible_metrics, graph_series_mode) do
+  defp blood_pressures_image_data(range, visible_metrics, graph_series_mode) do
     BloodPressures.list_blood_pressures()
     |> filter_for_graph_range(range)
-    |> BloodPressureGraphComponent.build_png(
+    |> BloodPressureGraphComponent.build_image_data(
       width: 1200,
       height: 800,
       visible_metrics: visible_metrics,
