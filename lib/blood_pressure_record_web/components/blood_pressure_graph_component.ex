@@ -82,7 +82,7 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
       |> Vl.mark(:line, point: [size: 20], stroke_dash: [2, 2])
       |> Vl.encode_field(:x, "date",
         type: :temporal,
-        title: "測定年月",
+        title: nil,
         axis: [
           format: "%Y/%m",
           label_font_size: 28,
@@ -95,7 +95,7 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
       )
       |> Vl.encode_field(:y, "value",
         type: :quantitative,
-        title: "値 (mmHg または 拍/分)",
+        title: nil,
         scale: [domain_min: 50],
         axis: [label_font_size: 28, title_font_size: 40]
       )
