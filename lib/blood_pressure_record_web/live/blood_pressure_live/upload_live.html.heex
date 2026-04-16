@@ -33,35 +33,62 @@
               class="mt-1.5 h-24 w-24 rounded-lg border border-zinc-200 object-cover"
             />
           <% end %>
-          <dl class="mt-1.5 grid grid-cols-2 gap-y-1 text-xs">
-            <dt class="text-zinc-500">測定日</dt>
-            <dd class="font-medium text-zinc-900">
-              <.form
-                for={@confirm_form}
-                id="confirm-measured-at-form"
-                phx-change="update-measured-at"
-              >
+          <.form
+            for={@confirm_form}
+            id="confirm-measured-at-form"
+            phx-change="update-confirm"
+          >
+            <dl class="mt-1.5 grid grid-cols-2 gap-y-1 text-xs">
+              <dt class="text-zinc-500">測定日</dt>
+              <dd class="font-medium text-zinc-900">
                 <.input
                   field={@confirm_form[:measured_at_date]}
                   type="date"
                   class="h-8 w-full rounded-md border border-zinc-300 px-2 text-xs text-zinc-700"
                 />
-              </.form>
-            </dd>
-            <%= if @pending_measurement.type == :blood_pressure do %>
-              <dt class="text-zinc-500">最高血圧</dt>
-              <dd class="font-medium text-zinc-900">{@pending_measurement.systolic}</dd>
-              <dt class="text-zinc-500">最低血圧</dt>
-              <dd class="font-medium text-zinc-900">{@pending_measurement.diastolic}</dd>
-              <dt class="text-zinc-500">脈拍</dt>
-              <dd class="font-medium text-zinc-900">{@pending_measurement.pulse}</dd>
-            <% else %>
-              <dt class="text-zinc-500">体重</dt>
-              <dd id="pending-weight-value" class="font-medium text-zinc-900">
-                {format_weight(@pending_measurement.weight)}
               </dd>
-            <% end %>
-          </dl>
+              <%= if @pending_measurement.type == :blood_pressure do %>
+                <dt class="text-zinc-500">最高血圧</dt>
+                <dd class="font-medium text-zinc-900">
+                  <.input
+                    field={@confirm_form[:systolic]}
+                    type="number"
+                    id="pending-systolic-input"
+                    class="h-8 w-full rounded-md border border-zinc-300 px-2 text-xs text-zinc-700"
+                  />
+                </dd>
+                <dt class="text-zinc-500">最低血圧</dt>
+                <dd class="font-medium text-zinc-900">
+                  <.input
+                    field={@confirm_form[:diastolic]}
+                    type="number"
+                    id="pending-diastolic-input"
+                    class="h-8 w-full rounded-md border border-zinc-300 px-2 text-xs text-zinc-700"
+                  />
+                </dd>
+                <dt class="text-zinc-500">脈拍</dt>
+                <dd class="font-medium text-zinc-900">
+                  <.input
+                    field={@confirm_form[:pulse]}
+                    type="number"
+                    id="pending-pulse-input"
+                    class="h-8 w-full rounded-md border border-zinc-300 px-2 text-xs text-zinc-700"
+                  />
+                </dd>
+              <% else %>
+                <dt class="text-zinc-500">体重</dt>
+                <dd id="pending-weight-value" class="font-medium text-zinc-900">
+                  <.input
+                    field={@confirm_form[:weight]}
+                    type="number"
+                    step="0.1"
+                    id="pending-weight-input"
+                    class="h-8 w-full rounded-md border border-zinc-300 px-2 text-xs text-zinc-700"
+                  />
+                </dd>
+              <% end %>
+            </dl>
+          </.form>
           <div class="mt-2 flex items-center gap-2">
             <button
               id="confirm-save-button"

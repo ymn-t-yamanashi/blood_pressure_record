@@ -58,29 +58,21 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
   end
 
   @impl Phoenix.LiveView
-  def handle_event(
-        "update-measured-at",
-        %{"confirm" => %{"measured_at_date" => date_value}},
-        socket
-      ) do
+  def handle_event("update-confirm", %{"confirm" => confirm_params}, socket) do
     case socket.assigns.pending_measurement do
-      %{measured_at: measured_at} = pending_measurement ->
-        case Date.from_iso8601(date_value) do
-          {:ok, date} ->
-            updated_measured_at = NaiveDateTime.new!(date, NaiveDateTime.to_time(measured_at))
-            updated_measurement = Map.put(pending_measurement, :measured_at, updated_measured_at)
-
-            {:noreply,
-             socket
-             |> assign(:pending_measurement, updated_measurement)
-             |> assign(:confirm_form, measured_at_form(updated_measured_at))}
-
-          _ ->
-            {:noreply, assign(socket, :confirm_form, measured_at_form(measured_at))}
-        end
-
-      _ ->
+      nil ->
         {:noreply, socket}
+
+      pending_measurement ->
+        updated_measurement =
+          pending_measurement
+          |> update_confirm_measured_at(confirm_params["measured_at_date"])
+          |> update_confirm_metrics(confirm_params)
+
+        {:noreply,
+         socket
+         |> assign(:pending_measurement, updated_measurement)
+         |> assign(:confirm_form, confirm_form(updated_measurement))}
     end
   end
 
@@ -315,8 +307,24 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
     end
   end
 
-  defp measured_at_form(%NaiveDateTime{} = measured_at) do
-    to_form(%{"measured_at_date" => Date.to_iso8601(NaiveDateTime.to_date(measured_at))},
+  defp confirm_form(%{type: :blood_pressure} = measurement) do
+    to_form(
+      %{
+        "measured_at_date" => Date.to_iso8601(NaiveDateTime.to_date(measurement.measured_at)),
+        "systolic" => measurement.systolic,
+        "diastolic" => measurement.diastolic,
+        "pulse" => measurement.pulse
+      },
+      as: :confirm
+    )
+  end
+
+  defp confirm_form(%{type: :weight} = measurement) do
+    to_form(
+      %{
+        "measured_at_date" => Date.to_iso8601(NaiveDateTime.to_date(measurement.measured_at)),
+        "weight" => format_weight(measurement.weight)
+      },
       as: :confirm
     )
   end
@@ -578,7 +586,7 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
             socket
             |> assign(:pending_measurement, pending_measurement)
             |> assign(:pending_image_data_url, preview_image)
-            |> assign(:confirm_form, measured_at_form(pending_measurement.measured_at))
+            |> assign(:confirm_form, confirm_form(pending_measurement))
 
           {:error, :classification} ->
             put_flash(socket, :error, "血圧か体重かを判定できませんでした")
@@ -599,6 +607,60 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
 
     if Keyword.get(endpoint_config, :code_reloader, false) do
       Logger.debug("Ollama response: #{inspect(response)}")
+    end
+  end
+
+  defp update_confirm_measured_at(%{measured_at: measured_at} = measurement, date_value) do
+    case Date.from_iso8601(date_value || "") do
+      {:ok, date} ->
+        Map.put(
+          measurement,
+          :measured_at,
+          NaiveDateTime.new!(date, NaiveDateTime.to_time(measured_at))
+        )
+
+      _ ->
+        measurement
+    end
+  end
+
+  defp update_confirm_metrics(%{type: :blood_pressure} = measurement, confirm_params) do
+    measurement
+    |> maybe_put_integer(:systolic, confirm_params["systolic"])
+    |> maybe_put_integer(:diastolic, confirm_params["diastolic"])
+    |> maybe_put_integer(:pulse, confirm_params["pulse"])
+  end
+
+  defp update_confirm_metrics(%{type: :weight} = measurement, confirm_params) do
+    case parse_weight(confirm_params["weight"]) do
+      {:ok, weight} -> Map.put(measurement, :weight, weight)
+      :error -> measurement
+    end
+  end
+
+  defp maybe_put_integer(measurement, _key, nil), do: measurement
+
+  defp maybe_put_integer(measurement, key, value) do
+    case Integer.parse(to_string(value)) do
+      {parsed, ""} -> Map.put(measurement, key, parsed)
+      _ -> measurement
+    end
+  end
+
+  defp parse_weight(nil), do: :error
+
+  defp parse_weight(value) do
+    normalized =
+      value
+      |> to_string()
+      |> String.trim()
+      |> String.replace_suffix("kg", "")
+      |> String.trim()
+      |> normalize_weight_string()
+
+    case Decimal.parse(normalized) do
+      {weight, ""} -> {:ok, Decimal.round(weight, 1)}
+      _ -> :error
     end
   end
 end
