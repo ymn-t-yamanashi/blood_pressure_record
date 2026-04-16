@@ -35,7 +35,7 @@ defmodule BloodPressureRecordWeb.Layouts do
 
   def app(assigns) do
     ~H"""
-    <header class="navbar px-4 sm:px-6 lg:px-8">
+    <header class="navbar min-h-0 px-4 py-1 sm:px-6 lg:px-8">
       <div>
         <a href="/" class="flex w-fit items-center gap-2">
           <img src={~p"/images/logo.svg"} width="36" />
@@ -44,8 +44,8 @@ defmodule BloodPressureRecordWeb.Layouts do
       </div>
     </header>
 
-    <main class="px-4 py-20 sm:px-6 lg:px-8">
-      <div class="mx-auto max-w-2xl space-y-4">
+    <main class="px-4 py-2 sm:px-6 lg:px-8 lg:py-3">
+      <div class="mx-auto max-w-screen-2xl space-y-2">
         {render_slot(@inner_block)}
       </div>
     </main>

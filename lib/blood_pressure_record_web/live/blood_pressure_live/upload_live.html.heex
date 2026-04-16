@@ -5,29 +5,29 @@
     <.live_file_input class="sr-only" upload={@uploads.avatar} />
     <label
       for={@uploads.avatar.ref}
-      class="inline-flex h-6 w-36 cursor-pointer items-center justify-center rounded-md bg-zinc-800 px-3 text-sm font-medium text-white transition hover:bg-zinc-700"
+      class="inline-flex h-6 w-32 cursor-pointer items-center justify-center rounded-md bg-zinc-800 px-3 text-sm font-medium text-white transition hover:bg-zinc-700"
     >
       AIで記録
     </label>
   </form>
 
-  <section class="relative left-1/2 mt-8 grid w-[min(96vw,1400px)] -translate-x-1/2 gap-6 lg:grid-cols-[1fr_1fr_2fr] lg:items-stretch">
-    <div>
+  <section class="relative left-1/2 mt-1.5 grid w-[min(96vw,1720px)] -translate-x-1/2 gap-2.5 lg:h-[calc(100vh-5.75rem)] lg:grid-cols-[0.85fr_1.1fr_2.05fr] lg:items-stretch">
+    <div class="min-h-0">
       <%= if @pending_blood_pressure do %>
         <section
           id="parsed-values"
-          class="rounded-xl border border-zinc-200 bg-zinc-50 p-4"
+          class="rounded-xl border border-zinc-200 bg-zinc-50 p-2.5 lg:h-full lg:overflow-auto"
         >
-          <h3 class="text-base font-semibold text-zinc-800">読み取り結果</h3>
+          <h3 class="text-sm font-semibold text-zinc-800">読み取り結果</h3>
           <%= if @pending_image_data_url do %>
             <img
               id="pending-upload-image"
               src={@pending_image_data_url}
               alt="Uploaded blood pressure image"
-              class="mt-3 h-40 w-40 rounded-lg border border-zinc-200 object-cover"
+              class="mt-1.5 h-24 w-24 rounded-lg border border-zinc-200 object-cover"
             />
           <% end %>
-          <dl class="mt-3 grid grid-cols-2 gap-y-2 text-sm">
+          <dl class="mt-1.5 grid grid-cols-2 gap-y-1 text-xs">
             <dt class="text-zinc-500">Measured at</dt>
             <dd class="font-medium text-zinc-900">
               <.form
@@ -49,12 +49,12 @@
             <dt class="text-zinc-500">Pulse</dt>
             <dd class="font-medium text-zinc-900">{@pending_blood_pressure.pulse}</dd>
           </dl>
-          <div class="mt-4 flex items-center gap-2">
+          <div class="mt-2 flex items-center gap-2">
             <button
               id="confirm-save-button"
               type="button"
               phx-click="confirm-save"
-              class="rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-emerald-700"
+              class="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-emerald-700"
             >
               確定
             </button>
@@ -62,7 +62,7 @@
               id="reset-pending-button"
               type="button"
               phx-click="reset-pending"
-              class="rounded-md border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
+              class="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
             >
               キャンセル
             </button>
@@ -70,7 +70,7 @@
         </section>
       <% else %>
         <div>
-          <section class="mt-4">
+          <section class="mt-2">
             <%!-- render each avatar entry --%>
             <article :for={entry <- @uploads.avatar.entries} class="upload-entry">
               <p class="text-sm text-zinc-600">{entry.client_name}</p>
@@ -107,10 +107,10 @@
       <% end %>
     </div>
 
-    <div>
+    <div class="min-h-0 lg:flex lg:flex-col">
       <div
         id="latest-pagination"
-        class="flex items-center justify-between text-xs text-zinc-600"
+        class="flex items-center justify-between text-[11px] text-zinc-600"
       >
         <span>全{@latest_total_count}件 / {@latest_page} / {@latest_total_pages}ページ</span>
         <div class="inline-flex items-center gap-2">
@@ -121,7 +121,7 @@
             phx-value-page={@latest_page - 1}
             disabled={@latest_page <= 1}
             class={[
-              "rounded border px-2 py-1 transition",
+              "rounded border px-2 py-0.5 transition",
               if(@latest_page <= 1,
                 do: "cursor-not-allowed border-zinc-200 text-zinc-400",
                 else: "border-zinc-300 text-zinc-700 hover:bg-zinc-100"
@@ -137,7 +137,7 @@
             phx-value-page={@latest_page + 1}
             disabled={@latest_page >= @latest_total_pages}
             class={[
-              "rounded border px-2 py-1 transition",
+              "rounded border px-2 py-0.5 transition",
               if(@latest_page >= @latest_total_pages,
                 do: "cursor-not-allowed border-zinc-200 text-zinc-400",
                 else: "border-zinc-300 text-zinc-700 hover:bg-zinc-100"
@@ -148,7 +148,7 @@
           </button>
         </div>
       </div>
-      <div id="latest-averages" class="mt-2 grid grid-cols-3 gap-2 text-xs">
+      <div id="latest-averages" class="mt-1 grid grid-cols-3 gap-1 text-[10px]">
         <div class={["rounded-lg border px-2 py-1", @latest_averages.systolic.container_class]}>
           <div class="flex items-center justify-between">
             <span class="text-zinc-700">最高血圧</span>
@@ -156,7 +156,7 @@
               {@latest_averages.systolic.level_text}
             </span>
           </div>
-          <div class="mt-1 text-base font-semibold text-zinc-900">
+          <div class="mt-0.5 text-[13px] font-semibold text-zinc-900">
             {if(@latest_averages.systolic.value, do: @latest_averages.systolic.value, else: "-")}
           </div>
         </div>
@@ -167,7 +167,7 @@
               {@latest_averages.diastolic.level_text}
             </span>
           </div>
-          <div class="mt-1 text-base font-semibold text-zinc-900">
+          <div class="mt-0.5 text-[13px] font-semibold text-zinc-900">
             {if(@latest_averages.diastolic.value, do: @latest_averages.diastolic.value, else: "-")}
           </div>
         </div>
@@ -178,86 +178,86 @@
               {@latest_averages.pulse.level_text}
             </span>
           </div>
-          <div class="mt-1 text-base font-semibold text-zinc-900">
+          <div class="mt-0.5 text-[13px] font-semibold text-zinc-900">
             {if(@latest_averages.pulse.value, do: @latest_averages.pulse.value, else: "-")}
           </div>
         </div>
       </div>
-      <div id="risk-legend" class="mt-2 overflow-hidden rounded-xl border border-zinc-200">
-        <div class="border-b border-zinc-200 bg-zinc-50 px-3 py-2 text-xs font-medium text-zinc-700">
+      <div id="risk-legend" class="mt-1 overflow-hidden rounded-xl border border-zinc-200">
+        <div class="border-b border-zinc-200 bg-zinc-50 px-3 py-1 text-[11px] font-medium text-zinc-700">
           家庭血圧分類
         </div>
-        <table class="min-w-full divide-y divide-zinc-200 text-[11px]">
+        <table class="min-w-full divide-y divide-zinc-200 text-[10px]">
           <thead class="bg-white text-zinc-500">
             <tr>
-              <th class="px-3 py-2 text-left font-medium">分類</th>
-              <th class="px-3 py-2 text-left font-medium">最高</th>
-              <th class="px-3 py-2 text-left font-medium">最低</th>
+              <th class="px-3 py-1 text-left font-medium">分類</th>
+              <th class="px-3 py-1 text-left font-medium">最高</th>
+              <th class="px-3 py-1 text-left font-medium">最低</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-zinc-100 text-zinc-700">
             <tr class="bg-emerald-50">
-              <td class="px-3 py-2 font-medium text-emerald-900">正常血圧</td>
-              <td class="px-3 py-2 text-zinc-600">115未満</td>
-              <td class="px-3 py-2 text-zinc-600">75未満</td>
+              <td class="px-3 py-1 font-medium text-emerald-900">正常血圧</td>
+              <td class="px-3 py-1 text-zinc-600">115未満</td>
+              <td class="px-3 py-1 text-zinc-600">75未満</td>
             </tr>
             <tr class="bg-lime-50">
-              <td class="px-3 py-2 font-medium text-lime-900">正常高値血圧</td>
-              <td class="px-3 py-2 text-zinc-600">115〜124</td>
-              <td class="px-3 py-2 text-zinc-600">75未満</td>
+              <td class="px-3 py-1 font-medium text-lime-900">正常高値血圧</td>
+              <td class="px-3 py-1 text-zinc-600">115〜124</td>
+              <td class="px-3 py-1 text-zinc-600">75未満</td>
             </tr>
             <tr class="bg-orange-200">
-              <td class="px-3 py-2 font-medium text-orange-900">高値血圧</td>
-              <td class="px-3 py-2 text-zinc-600">125〜134</td>
-              <td class="px-3 py-2 text-zinc-600">75〜84</td>
+              <td class="px-3 py-1 font-medium text-orange-900">高値血圧</td>
+              <td class="px-3 py-1 text-zinc-600">125〜134</td>
+              <td class="px-3 py-1 text-zinc-600">75〜84</td>
             </tr>
             <tr class="bg-rose-300">
-              <td class="px-3 py-2 font-medium text-rose-900">高血圧</td>
-              <td class="px-3 py-2 text-zinc-600">135以上</td>
-              <td class="px-3 py-2 text-zinc-600">85以上</td>
+              <td class="px-3 py-1 font-medium text-rose-900">高血圧</td>
+              <td class="px-3 py-1 text-zinc-600">135以上</td>
+              <td class="px-3 py-1 text-zinc-600">85以上</td>
             </tr>
           </tbody>
         </table>
       </div>
-      <div class="mt-3 rounded-xl border border-zinc-200">
-        <table class="min-w-full divide-y divide-zinc-200 text-sm">
+      <div class="mt-1 rounded-xl border border-zinc-200 lg:min-h-0 lg:flex-1 lg:overflow-auto">
+        <table class="min-w-full divide-y divide-zinc-200 text-[13px]">
           <thead class="bg-zinc-100 text-zinc-600">
             <tr>
-              <th class="px-3 py-2 text-left font-medium">測定日</th>
-              <th class="px-3 py-2 text-left font-medium">最高血圧</th>
-              <th class="px-3 py-2 text-left font-medium">最低血圧</th>
-              <th class="px-3 py-2 text-left font-medium">脈拍</th>
+              <th class="px-3 py-1 text-left font-medium">測定日</th>
+              <th class="px-3 py-1 text-left font-medium">最高血圧</th>
+              <th class="px-3 py-1 text-left font-medium">最低血圧</th>
+              <th class="px-3 py-1 text-left font-medium">脈拍</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-zinc-100 bg-white text-zinc-800">
             <tr :for={bp <- @latest_blood_pressures}>
-              <td class="bg-zinc-50 px-3 py-2">
+              <td class="bg-zinc-50 px-3 py-1">
                 {Calendar.strftime(bp.measured_at, "%Y/%m/%d")}
               </td>
-              <td class={["px-3 py-2", risk_cell_class(:systolic, bp.systolic)]}>
+              <td class={["px-3 py-1", risk_cell_class(:systolic, bp.systolic)]}>
                 {bp.systolic}
               </td>
-              <td class={["px-3 py-2", risk_cell_class(:diastolic, bp.diastolic)]}>
+              <td class={["px-3 py-1", risk_cell_class(:diastolic, bp.diastolic)]}>
                 {bp.diastolic}
               </td>
-              <td class={["px-3 py-2", risk_cell_class(:pulse, bp.pulse)]}>{bp.pulse}</td>
+              <td class={["px-3 py-1", risk_cell_class(:pulse, bp.pulse)]}>{bp.pulse}</td>
             </tr>
           </tbody>
         </table>
       </div>
     </div>
 
-    <div class="flex flex-col">
-      <div class="flex flex-col gap-3">
+    <div class="min-h-0 flex flex-col">
+      <div class="flex flex-col gap-1.5">
         <div class="flex flex-wrap items-center justify-between gap-2">
-          <h3 class="text-base font-semibold text-zinc-800">グラフ</h3>
+          <h3 class="text-sm font-semibold text-zinc-800">グラフ</h3>
           <div class="flex items-center gap-2">
             <button
               id="graph-sync-mode-button"
               type="button"
               phx-click="toggle-graph-sync-mode"
               class={[
-                "rounded-md border px-2 py-1 text-xs font-medium transition",
+                "rounded-md border px-2 py-0.5 text-xs font-medium transition",
                 if(@graph_sync_latest_page,
                   do: "border-emerald-300 bg-emerald-50 text-emerald-700",
                   else: "border-zinc-300 text-zinc-700 hover:bg-zinc-100"
@@ -266,7 +266,10 @@
             >
               {if(@graph_sync_latest_page, do: "ページ連動: ON", else: "ページ連動: OFF")}
             </button>
-            <div id="graph-range-switch" class="inline-flex rounded-md border border-zinc-300 p-1">
+            <div
+              id="graph-range-switch"
+              class="inline-flex rounded-md border border-zinc-300 p-0.5"
+            >
               <button
                 id="graph-range-all-button"
                 type="button"
@@ -274,7 +277,7 @@
                 phx-value-range="all"
                 disabled={@graph_sync_latest_page}
                 class={[
-                  "rounded px-2 py-1 text-xs font-medium transition",
+                  "rounded px-2 py-0.5 text-xs font-medium transition",
                   if(@graph_range == "all",
                     do: "bg-zinc-800 text-white",
                     else: "text-zinc-600 hover:bg-zinc-100"
@@ -291,7 +294,7 @@
                 phx-value-range="recent_two_months"
                 disabled={@graph_sync_latest_page}
                 class={[
-                  "rounded px-2 py-1 text-xs font-medium transition",
+                  "rounded px-2 py-0.5 text-xs font-medium transition",
                   if(@graph_range == "recent_two_months",
                     do: "bg-zinc-800 text-white",
                     else: "text-zinc-600 hover:bg-zinc-100"
@@ -310,13 +313,13 @@
           id="upload-graph-visibility-form"
           phx-change="update-graph-visibility"
         >
-          <fieldset class="rounded-2xl border border-zinc-200 bg-zinc-50 p-3">
+          <fieldset class="rounded-2xl border border-zinc-200 bg-zinc-50 p-1.5">
             <legend class="px-1 text-xs font-medium text-zinc-600">表示項目</legend>
-            <div class="mt-2 grid gap-2 sm:grid-cols-3">
+            <div class="mt-1 grid gap-1.5 sm:grid-cols-3">
               <label
                 :for={{metric, label} <- @graph_metric_options}
                 for={"upload-visibility-#{metric}"}
-                class="flex cursor-pointer items-center justify-between rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-700 transition hover:border-sky-300 hover:bg-sky-50"
+                class="flex cursor-pointer items-center justify-between rounded-xl border border-zinc-200 bg-white px-2.5 py-0.5 text-sm font-medium text-zinc-700 transition hover:border-sky-300 hover:bg-sky-50"
               >
                 <span>{label}</span>
                 <input
@@ -337,12 +340,12 @@
           id="upload-graph-series-form"
           phx-change="update-graph-series-mode"
         >
-          <fieldset class="rounded-2xl border border-zinc-200 bg-zinc-50 p-3">
+          <fieldset class="rounded-2xl border border-zinc-200 bg-zinc-50 p-1.5">
             <legend class="px-1 text-xs font-medium text-zinc-600">表示系列</legend>
-            <div class="mt-2 grid gap-2 sm:grid-cols-3">
+            <div class="mt-1 grid gap-1.5 sm:grid-cols-3">
               <label
                 for="graph-series-actual"
-                class="flex cursor-pointer items-center justify-between rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-700 transition hover:border-emerald-300 hover:bg-emerald-50"
+                class="flex cursor-pointer items-center justify-between rounded-xl border border-zinc-200 bg-white px-2.5 py-0.5 text-sm font-medium text-zinc-700 transition hover:border-emerald-300 hover:bg-emerald-50"
               >
                 <span>実測値</span>
                 <input
@@ -356,7 +359,7 @@
               </label>
               <label
                 for="graph-series-average"
-                class="flex cursor-pointer items-center justify-between rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-700 transition hover:border-emerald-300 hover:bg-emerald-50"
+                class="flex cursor-pointer items-center justify-between rounded-xl border border-zinc-200 bg-white px-2.5 py-0.5 text-sm font-medium text-zinc-700 transition hover:border-emerald-300 hover:bg-emerald-50"
               >
                 <span>平均</span>
                 <input
@@ -370,7 +373,7 @@
               </label>
               <label
                 for="graph-series-both"
-                class="flex cursor-pointer items-center justify-between rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-700 transition hover:border-emerald-300 hover:bg-emerald-50"
+                class="flex cursor-pointer items-center justify-between rounded-xl border border-zinc-200 bg-white px-2.5 py-0.5 text-sm font-medium text-zinc-700 transition hover:border-emerald-300 hover:bg-emerald-50"
               >
                 <span>両方</span>
                 <input
@@ -386,10 +389,10 @@
           </fieldset>
         </.form>
       </div>
-      <div class="mt-3 flex flex-1 items-center justify-center rounded-xl border border-zinc-200 bg-white p-3">
+      <div class="mt-1.5 flex min-h-0 flex-1 items-center justify-center rounded-xl border border-zinc-200 bg-white p-2">
         <.blood_pressure_graph
           image_data={@blood_pressures_image_data}
-          class="max-h-full w-auto max-w-full object-contain"
+          class="max-h-full w-full max-w-full object-contain"
         />
       </div>
     </div>
