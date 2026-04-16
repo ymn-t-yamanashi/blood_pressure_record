@@ -13,13 +13,10 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
   @metric_thresholds %{
     "systolic" => [
       %{value: 114, color: "#10b981"},
-      %{value: 115, color: "#84cc16"},
-      %{value: 125, color: "#f97316"},
       %{value: 135, color: "#f43f5e"}
     ],
     "diastolic" => [
       %{value: 74, color: "#10b981"},
-      %{value: 75, color: "#f97316"},
       %{value: 85, color: "#f43f5e"}
     ]
   }
@@ -100,7 +97,7 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
     threshold_lines =
       Vl.new()
       |> Vl.data_from_values(thresholds)
-      |> Vl.mark(:rule, stroke_width: 2, stroke_dash: [10, 6], opacity: 0.75)
+      |> Vl.mark(:rule, stroke_width: 2, opacity: 0.75)
       |> Vl.encode_field(:y, "threshold", type: :quantitative, scale: [domain_min: 50])
       |> Vl.encode_field(:color, "color",
         type: :nominal,
