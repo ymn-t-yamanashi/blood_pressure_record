@@ -75,10 +75,10 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
       |> Vl.mark(:line, point: [size: 20], stroke_dash: [2, 2])
       |> Vl.encode_field(:x, "date",
         type: :temporal,
-        title: "測定日",
+        title: "測定年月",
         axis: [
-          format: "%Y/%m/%d",
-          label_font_size: 32,
+          format: "%Y/%m",
+          label_font_size: 28,
           title_font_size: 40,
           values: month_first_dates,
           grid: true,
@@ -90,7 +90,7 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
         type: :quantitative,
         title: "値 (mmHg または 拍/分)",
         scale: [domain_min: 50],
-        axis: [label_font_size: 32, title_font_size: 40]
+        axis: [label_font_size: 28, title_font_size: 40]
       )
       |> Vl.encode_field(:color, "type", type: :nominal, title: "測定項目")
 
@@ -116,13 +116,13 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
     Vl.new(width: width, height: height)
     |> Vl.config(
       legend: [
-        label_font_size: 32,
+        label_font_size: 28,
         title_font_size: 40,
         symbol_size: 440,
         padding: 16
       ],
       axis: [label_limit: 240],
-      style: [guide_title: [font_size: 40], guide_label: [font_size: 32]],
+      style: [guide_title: [font_size: 40], guide_label: [font_size: 28]],
       view: [stroke: :transparent]
     )
     |> Vl.layers([line_chart, average_lines, threshold_lines])
