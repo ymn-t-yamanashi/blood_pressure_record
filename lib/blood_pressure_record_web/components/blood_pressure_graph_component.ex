@@ -10,6 +10,18 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
     {"pulse", "脈拍"}
   ]
   @default_visible_metrics ["systolic", "diastolic"]
+  @metric_thresholds %{
+    "systolic" => [
+      %{value: 119, color: "#10b981"},
+      %{value: 140, color: "#f97316"},
+      %{value: 160, color: "#f43f5e"}
+    ],
+    "diastolic" => [
+      %{value: 79, color: "#10b981"},
+      %{value: 90, color: "#f97316"},
+      %{value: 100, color: "#f43f5e"}
+    ]
+  }
 
   attr :png, :string, required: true
   attr :class, :string, default: nil
@@ -57,6 +69,7 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
   defp draw_graph(data, width, height) do
     month_first_dates = month_first_dates(data)
     averages = fifteen_day_averages(data)
+    thresholds = threshold_lines(data)
 
     line_chart =
       Vl.new()
@@ -83,17 +96,16 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
       )
       |> Vl.encode_field(:color, "type", type: :nominal, title: "測定項目")
 
-    systolic_threshold =
+    threshold_lines =
       Vl.new()
-      |> Vl.data_from_values([%{threshold: 120}])
-      |> Vl.mark(:rule, color: "#9ca3af", stroke_width: 2, stroke_dash: [10, 6])
+      |> Vl.data_from_values(thresholds)
+      |> Vl.mark(:rule, stroke_width: 2, stroke_dash: [10, 6], opacity: 0.75)
       |> Vl.encode_field(:y, "threshold", type: :quantitative, scale: [domain_min: 50])
-
-    diastolic_threshold =
-      Vl.new()
-      |> Vl.data_from_values([%{threshold: 70}])
-      |> Vl.mark(:rule, color: "#9ca3af", stroke_width: 2, stroke_dash: [10, 6])
-      |> Vl.encode_field(:y, "threshold", type: :quantitative, scale: [domain_min: 50])
+      |> Vl.encode_field(:color, "color",
+        type: :nominal,
+        legend: nil,
+        scale: nil
+      )
 
     average_lines =
       Vl.new()
@@ -115,7 +127,7 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
       style: [guide_title: [font_size: 40], guide_label: [font_size: 32]],
       view: [stroke: :transparent]
     )
-    |> Vl.layers([line_chart, average_lines, systolic_threshold, diastolic_threshold])
+    |> Vl.layers([line_chart, average_lines, threshold_lines])
     |> VlConvert.to_png()
     |> Base.encode64()
   end
@@ -180,6 +192,22 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
   end
 
   defp fifteen_day_bucket(date, min_date), do: div(Date.diff(date, min_date), 15)
+
+  defp threshold_lines(data) do
+    data
+    |> Enum.map(&metric_key/1)
+    |> Enum.uniq()
+    |> Enum.flat_map(fn metric ->
+      Map.get(@metric_thresholds, metric, [])
+      |> Enum.map(fn %{value: value, color: color} ->
+        %{threshold: value, color: color}
+      end)
+    end)
+  end
+
+  defp metric_key(%{type: "最高血圧"}), do: "systolic"
+  defp metric_key(%{type: "最低血圧"}), do: "diastolic"
+  defp metric_key(%{type: "脈拍"}), do: "pulse"
 
   defp visible_metric?("最高血圧", visible_metrics), do: "systolic" in visible_metrics
   defp visible_metric?("最低血圧", visible_metrics), do: "diastolic" in visible_metrics
