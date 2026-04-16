@@ -1,7 +1,7 @@
 <%!-- lib/my_app_web/live/upload_live.html.heex --%>
 <%!-- use phx-drop-target with the upload ref to enable file drag and drop --%>
 <Layouts.app flash={@flash}>
-  <section class="relative left-1/2 mt-1.5 grid w-[min(96vw,1720px)] -translate-x-1/2 gap-2.5 lg:h-[calc(100vh-5.75rem)] lg:grid-cols-[0.85fr_1.1fr_2.05fr] lg:items-stretch">
+  <section class="relative left-1/2 mt-1.5 grid w-[min(96vw,1720px)] -translate-x-1/2 gap-2.5 lg:grid-cols-[0.85fr_1.1fr_2.05fr] lg:items-start">
     <div class="min-h-0">
       <div class="mb-1 flex items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white px-3 py-2">
         <div>
@@ -22,7 +22,7 @@
       <%= if @pending_blood_pressure do %>
         <section
           id="parsed-values"
-          class="rounded-xl border border-zinc-200 bg-zinc-50 p-2.5 lg:h-full lg:overflow-auto"
+          class="rounded-xl border border-zinc-200 bg-zinc-50 p-2.5 lg:min-h-0 lg:flex-1 lg:overflow-auto"
         >
           <h3 class="text-sm font-semibold text-zinc-800">読み取り結果</h3>
           <%= if @pending_image_data_url do %>
@@ -44,7 +44,7 @@
                 <.input
                   field={@confirm_form[:measured_at_date]}
                   type="date"
-                  label="Measured at"
+                  class="h-8 w-full rounded-md border border-zinc-300 px-2 text-xs text-zinc-700"
                 />
               </.form>
             </dd>
@@ -113,7 +113,7 @@
       <% end %>
     </div>
 
-    <div class="min-h-0 lg:flex lg:flex-col">
+    <div class="min-h-0">
       <div
         id="latest-pagination"
         class="flex items-center justify-between text-[11px] text-zinc-600"
@@ -225,7 +225,7 @@
           </tbody>
         </table>
       </div>
-      <div class="mt-1 rounded-xl border border-zinc-200 lg:min-h-0 lg:flex-1 lg:overflow-auto">
+      <div class="mt-1 rounded-xl border border-zinc-200 lg:max-h-[calc(100vh-22rem)] lg:overflow-auto">
         <table class="min-w-full divide-y divide-zinc-200 text-[13px]">
           <thead class="bg-zinc-100 text-zinc-600">
             <tr>
@@ -253,11 +253,11 @@
       </div>
     </div>
 
-    <div class="min-h-0 flex flex-col">
-      <div class="flex flex-col gap-1.5">
+    <div class="min-h-0">
+      <div class="flex flex-col gap-1.5 rounded-xl border border-zinc-200 bg-zinc-50 p-1.5">
         <div class="flex flex-wrap items-center justify-between gap-2">
           <h3 class="text-sm font-semibold text-zinc-800">グラフ</h3>
-          <div class="flex items-center gap-2">
+          <div class="flex flex-wrap items-center gap-1.5">
             <button
               id="graph-sync-mode-button"
               type="button"
@@ -313,92 +313,111 @@
             </div>
           </div>
         </div>
+        <div class="grid gap-1.5 lg:grid-cols-[1.4fr_1fr]">
+          <.form
+            for={@graph_visibility_form}
+            id="upload-graph-visibility-form"
+            phx-change="update-graph-visibility"
+          >
+            <fieldset class="rounded-xl border border-zinc-200 bg-white p-1.5">
+              <legend class="px-1 text-[11px] font-medium text-zinc-600">表示項目</legend>
+              <div class="mt-1 flex flex-wrap gap-1">
+                <label
+                  :for={{metric, label} <- @graph_metric_options}
+                  for={"upload-visibility-#{metric}"}
+                  class="inline-flex cursor-pointer items-center gap-1 rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[11px] font-medium text-zinc-700 transition hover:border-sky-300 hover:bg-sky-50"
+                >
+                  <input
+                    id={"upload-visibility-#{metric}"}
+                    type="checkbox"
+                    name="visibility[]"
+                    value={metric}
+                    checked={metric in @visible_metrics}
+                    class="h-3.5 w-3.5 rounded border-zinc-300 text-sky-600 focus:ring-sky-500"
+                  />
+                  <span>{label}</span>
+                </label>
+              </div>
+            </fieldset>
+          </.form>
 
-        <.form
-          for={@graph_visibility_form}
-          id="upload-graph-visibility-form"
-          phx-change="update-graph-visibility"
-        >
-          <fieldset class="rounded-2xl border border-zinc-200 bg-zinc-50 p-1.5">
-            <legend class="px-1 text-xs font-medium text-zinc-600">表示項目</legend>
-            <div class="mt-1 grid gap-1.5 sm:grid-cols-3">
-              <label
-                :for={{metric, label} <- @graph_metric_options}
-                for={"upload-visibility-#{metric}"}
-                class="flex cursor-pointer items-center justify-between rounded-xl border border-zinc-200 bg-white px-2.5 py-0.5 text-sm font-medium text-zinc-700 transition hover:border-sky-300 hover:bg-sky-50"
-              >
-                <span>{label}</span>
-                <input
-                  id={"upload-visibility-#{metric}"}
-                  type="checkbox"
-                  name="visibility[]"
-                  value={metric}
-                  checked={metric in @visible_metrics}
-                  class="h-4 w-4 rounded border-zinc-300 text-sky-600 focus:ring-sky-500"
-                />
-              </label>
-            </div>
-          </fieldset>
-        </.form>
-
-        <.form
-          for={@graph_series_form}
-          id="upload-graph-series-form"
-          phx-change="update-graph-series-mode"
-        >
-          <fieldset class="rounded-2xl border border-zinc-200 bg-zinc-50 p-1.5">
-            <legend class="px-1 text-xs font-medium text-zinc-600">表示系列</legend>
-            <div class="mt-1 grid gap-1.5 sm:grid-cols-3">
-              <label
-                for="graph-series-actual"
-                class="flex cursor-pointer items-center justify-between rounded-xl border border-zinc-200 bg-white px-2.5 py-0.5 text-sm font-medium text-zinc-700 transition hover:border-emerald-300 hover:bg-emerald-50"
-              >
-                <span>実測値</span>
-                <input
-                  id="graph-series-actual"
-                  type="radio"
-                  name="graph_series[series_mode]"
-                  value="actual"
-                  checked={@graph_series_mode == "actual"}
-                  class="h-4 w-4 border-zinc-300 text-emerald-600 focus:ring-emerald-500"
-                />
-              </label>
-              <label
-                for="graph-series-average"
-                class="flex cursor-pointer items-center justify-between rounded-xl border border-zinc-200 bg-white px-2.5 py-0.5 text-sm font-medium text-zinc-700 transition hover:border-emerald-300 hover:bg-emerald-50"
-              >
-                <span>平均</span>
-                <input
-                  id="graph-series-average"
-                  type="radio"
-                  name="graph_series[series_mode]"
-                  value="average"
-                  checked={@graph_series_mode == "average"}
-                  class="h-4 w-4 border-zinc-300 text-emerald-600 focus:ring-emerald-500"
-                />
-              </label>
-              <label
-                for="graph-series-both"
-                class="flex cursor-pointer items-center justify-between rounded-xl border border-zinc-200 bg-white px-2.5 py-0.5 text-sm font-medium text-zinc-700 transition hover:border-emerald-300 hover:bg-emerald-50"
-              >
-                <span>両方</span>
-                <input
-                  id="graph-series-both"
-                  type="radio"
-                  name="graph_series[series_mode]"
-                  value="both"
-                  checked={@graph_series_mode == "both"}
-                  class="h-4 w-4 border-zinc-300 text-emerald-600 focus:ring-emerald-500"
-                />
-              </label>
-            </div>
-          </fieldset>
-        </.form>
+          <.form
+            for={@graph_series_form}
+            id="upload-graph-series-form"
+            phx-change="update-graph-series-mode"
+          >
+            <fieldset class="rounded-xl border border-zinc-200 bg-white p-1.5">
+              <legend class="px-1 text-[11px] font-medium text-zinc-600">表示系列</legend>
+              <div class="mt-1 inline-flex w-full rounded-lg border border-zinc-200 bg-zinc-50 p-0.5">
+                <label
+                  for="graph-series-actual"
+                  class={[
+                    "flex flex-1 cursor-pointer items-center justify-center rounded-md px-2 py-0.5 text-[11px] font-medium transition",
+                    if(@graph_series_mode == "actual",
+                      do: "bg-emerald-600 text-white",
+                      else: "text-zinc-700 hover:bg-white"
+                    )
+                  ]}
+                >
+                  <input
+                    id="graph-series-actual"
+                    type="radio"
+                    name="graph_series[series_mode]"
+                    value="actual"
+                    checked={@graph_series_mode == "actual"}
+                    class="sr-only"
+                  />
+                  <span>実測値</span>
+                </label>
+                <label
+                  for="graph-series-average"
+                  class={[
+                    "flex flex-1 cursor-pointer items-center justify-center rounded-md px-2 py-0.5 text-[11px] font-medium transition",
+                    if(@graph_series_mode == "average",
+                      do: "bg-emerald-600 text-white",
+                      else: "text-zinc-700 hover:bg-white"
+                    )
+                  ]}
+                >
+                  <input
+                    id="graph-series-average"
+                    type="radio"
+                    name="graph_series[series_mode]"
+                    value="average"
+                    checked={@graph_series_mode == "average"}
+                    class="sr-only"
+                  />
+                  <span>平均</span>
+                </label>
+                <label
+                  for="graph-series-both"
+                  class={[
+                    "flex flex-1 cursor-pointer items-center justify-center rounded-md px-2 py-0.5 text-[11px] font-medium transition",
+                    if(@graph_series_mode == "both",
+                      do: "bg-emerald-600 text-white",
+                      else: "text-zinc-700 hover:bg-white"
+                    )
+                  ]}
+                >
+                  <input
+                    id="graph-series-both"
+                    type="radio"
+                    name="graph_series[series_mode]"
+                    value="both"
+                    checked={@graph_series_mode == "both"}
+                    class="sr-only"
+                  />
+                  <span>両方</span>
+                </label>
+              </div>
+            </fieldset>
+          </.form>
+        </div>
       </div>
-      <div class="mt-1.5 flex min-h-0 flex-1 items-center justify-center rounded-xl border border-zinc-200 bg-white p-2">
+      <div class="mt-1 flex items-center justify-center rounded-xl border border-zinc-200 bg-white p-1 lg:h-[calc(100vh-22rem)] lg:min-h-[520px] lg:max-h-[680px]">
         <.blood_pressure_graph
           image_data={@blood_pressures_image_data}
-          class="max-h-full w-full max-w-full object-contain"
+          class="h-full w-full max-w-full object-contain"
         />
       </div>
     </div>

@@ -134,11 +134,13 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
           label_font_size: 28,
           title_font_size: 40,
           symbol_size: 440,
-          padding: 16
+          padding: 10,
+          offset: 8
         ],
-        axis: [label_limit: 240],
+        axis: [label_limit: 240, grid: false],
         style: [guide_title: [font_size: 40], guide_label: [font_size: 28]],
-        view: [stroke: :transparent]
+        view: [stroke: :transparent],
+        padding: [top: 6, bottom: 2, left: 8, right: 8]
       )
       |> Vl.layers(layers)
       |> VlConvert.to_svg()
