@@ -131,9 +131,13 @@ defmodule BloodPressureRecordWeb.BloodPressureLiveTest do
       {:ok, view, _html} = live(conn, ~p"/")
 
       assert has_element?(view, "#upload-graph-visibility-form")
+      assert has_element?(view, "#upload-graph-series-form")
       assert has_element?(view, "#upload-visibility-systolic[checked]")
       assert has_element?(view, "#upload-visibility-diastolic[checked]")
       refute has_element?(view, "#upload-visibility-pulse[checked]")
+      assert has_element?(view, "#graph-series-both[checked]")
+      refute has_element?(view, "#graph-series-actual[checked]")
+      refute has_element?(view, "#graph-series-average[checked]")
       assert has_element?(view, "img")
     end
 
@@ -147,6 +151,19 @@ defmodule BloodPressureRecordWeb.BloodPressureLiveTest do
       refute has_element?(view, "#upload-visibility-systolic[checked]")
       refute has_element?(view, "#upload-visibility-diastolic[checked]")
       assert has_element?(view, "#upload-visibility-pulse[checked]")
+      assert has_element?(view, "img")
+    end
+
+    test "updates graph series mode from the form", %{conn: conn} do
+      {:ok, view, _html} = live(conn, ~p"/")
+
+      view
+      |> form("#upload-graph-series-form", %{"graph_series" => %{"series_mode" => "average"}})
+      |> render_change()
+
+      refute has_element?(view, "#graph-series-both[checked]")
+      refute has_element?(view, "#graph-series-actual[checked]")
+      assert has_element?(view, "#graph-series-average[checked]")
       assert has_element?(view, "img")
     end
 

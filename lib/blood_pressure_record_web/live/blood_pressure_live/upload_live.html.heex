@@ -317,6 +317,60 @@
             </div>
           </fieldset>
         </.form>
+
+        <.form
+          for={@graph_series_form}
+          id="upload-graph-series-form"
+          phx-change="update-graph-series-mode"
+        >
+          <fieldset class="rounded-2xl border border-zinc-200 bg-zinc-50 p-3">
+            <legend class="px-1 text-xs font-medium text-zinc-600">表示系列</legend>
+            <div class="mt-2 grid gap-2 sm:grid-cols-3">
+              <label
+                for="graph-series-actual"
+                class="flex cursor-pointer items-center justify-between rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-700 transition hover:border-emerald-300 hover:bg-emerald-50"
+              >
+                <span>実測値</span>
+                <input
+                  id="graph-series-actual"
+                  type="radio"
+                  name="graph_series[series_mode]"
+                  value="actual"
+                  checked={@graph_series_mode == "actual"}
+                  class="h-4 w-4 border-zinc-300 text-emerald-600 focus:ring-emerald-500"
+                />
+              </label>
+              <label
+                for="graph-series-average"
+                class="flex cursor-pointer items-center justify-between rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-700 transition hover:border-emerald-300 hover:bg-emerald-50"
+              >
+                <span>平均</span>
+                <input
+                  id="graph-series-average"
+                  type="radio"
+                  name="graph_series[series_mode]"
+                  value="average"
+                  checked={@graph_series_mode == "average"}
+                  class="h-4 w-4 border-zinc-300 text-emerald-600 focus:ring-emerald-500"
+                />
+              </label>
+              <label
+                for="graph-series-both"
+                class="flex cursor-pointer items-center justify-between rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-700 transition hover:border-emerald-300 hover:bg-emerald-50"
+              >
+                <span>両方</span>
+                <input
+                  id="graph-series-both"
+                  type="radio"
+                  name="graph_series[series_mode]"
+                  value="both"
+                  checked={@graph_series_mode == "both"}
+                  class="h-4 w-4 border-zinc-300 text-emerald-600 focus:ring-emerald-500"
+                />
+              </label>
+            </div>
+          </fieldset>
+        </.form>
       </div>
       <div class="mt-3 flex flex-1 items-center justify-center rounded-xl border border-zinc-200 bg-white p-3">
         <.blood_pressure_graph

@@ -10,6 +10,7 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
     {"pulse", "脈拍"}
   ]
   @default_visible_metrics ["systolic", "diastolic"]
+  @graph_series_modes ["actual", "average", "both"]
   @metric_thresholds %{
     "systolic" => [
       %{value: 114, color: "#10b981"},
@@ -34,15 +35,18 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
     width = Keyword.get(opts, :width, 600)
     height = Keyword.get(opts, :height, 400)
     visible_metrics = Keyword.get(opts, :visible_metrics, @default_visible_metrics)
+    graph_series_mode = Keyword.get(opts, :graph_series_mode, "both")
 
     blood_pressures
     |> Enum.flat_map(&to_graph_data/1)
     |> Enum.filter(&visible_metric?(&1.type, visible_metrics))
-    |> draw_graph(width, height)
+    |> draw_graph(width, height, graph_series_mode)
   end
 
   def metric_options, do: @metric_options
   def default_visible_metrics, do: @default_visible_metrics
+  def default_graph_series_mode, do: "both"
+  def graph_series_modes, do: @graph_series_modes
 
   def normalize_visible_metrics(metrics) when is_list(metrics) do
     valid_metrics = Enum.map(@metric_options, fn {metric, _label} -> metric end)
@@ -54,6 +58,9 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
 
   def normalize_visible_metrics(_metrics), do: []
 
+  def normalize_graph_series_mode(mode) when mode in @graph_series_modes, do: mode
+  def normalize_graph_series_mode(_mode), do: default_graph_series_mode()
+
   defp to_graph_data(data) do
     date = NaiveDateTime.to_date(data.measured_at)
 
@@ -64,7 +71,7 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
     ]
   end
 
-  defp draw_graph(data, width, height) do
+  defp draw_graph(data, width, height, graph_series_mode) do
     month_first_dates = month_first_dates(data)
     averages = fifteen_day_averages(data)
     thresholds = threshold_lines(data)
@@ -113,6 +120,13 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
       |> Vl.encode_field(:y, "value", type: :quantitative, scale: [domain_min: 50])
       |> Vl.encode_field(:color, "type", type: :nominal, title: "測定項目")
 
+    layers =
+      case graph_series_mode do
+        "actual" -> [line_chart, threshold_lines]
+        "average" -> [average_lines, threshold_lines]
+        _ -> [line_chart, average_lines, threshold_lines]
+      end
+
     Vl.new(width: width, height: height)
     |> Vl.config(
       legend: [
@@ -125,7 +139,7 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
       style: [guide_title: [font_size: 40], guide_label: [font_size: 28]],
       view: [stroke: :transparent]
     )
-    |> Vl.layers([line_chart, average_lines, threshold_lines])
+    |> Vl.layers(layers)
     |> VlConvert.to_png()
     |> Base.encode64()
   end
