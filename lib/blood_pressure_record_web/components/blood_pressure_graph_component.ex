@@ -13,7 +13,7 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
   @metric_thresholds %{
     "systolic" => [
       %{value: 114, color: "#10b981"},
-      %{value: 115, color: "#f59e0b"},
+      %{value: 115, color: "#84cc16"},
       %{value: 125, color: "#f97316"},
       %{value: 135, color: "#f43f5e"}
     ],
