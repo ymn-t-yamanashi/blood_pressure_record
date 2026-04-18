@@ -79,7 +79,7 @@ mix precommit
 
 ## DB バックアップ
 
-日付付きファイル名で SQLite DB をバックアップできます。
+`backup/` ディレクトリを作成し、その配下に日付付きファイル名で SQLite DB をバックアップできます。
 
 ```bash
 mix db.backup
