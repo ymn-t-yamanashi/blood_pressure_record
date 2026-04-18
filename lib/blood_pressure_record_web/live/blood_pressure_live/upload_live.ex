@@ -83,10 +83,10 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
         {:noreply, put_flash(socket, :error, "先にUploadで読み取りを実行してください")}
 
       %{type: :blood_pressure} = measurement ->
-        save_blood_pressure(socket, Map.delete(measurement, :type))
+        save_measurement(socket, :blood_pressure, Map.delete(measurement, :type))
 
       %{type: :weight} = measurement ->
-        save_weight(socket, Map.delete(measurement, :type))
+        save_measurement(socket, :weight, Map.delete(measurement, :type))
     end
   end
 
@@ -99,12 +99,14 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
   def handle_event("change-graph-range", %{"range" => range}, socket)
       when range in ["all", "recent_two_months"] do
     socket =
-      if socket.assigns.graph_sync_latest_page do
-        socket
-      else
-        socket
-        |> assign(:graph_range, range)
-        |> maybe_refresh_graph_for_mode()
+      case socket.assigns.graph_sync_latest_page do
+        true ->
+          socket
+
+        false ->
+          socket
+          |> assign(:graph_range, range)
+          |> maybe_refresh_graph_for_mode()
       end
 
     {:noreply, socket}
@@ -232,33 +234,22 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
     """
   end
 
-  defp save_blood_pressure(socket, blood_pressure_params) do
-    case BloodPressures.create_blood_pressure(blood_pressure_params) do
-      {:ok, _blood_pressure} ->
-        {:noreply,
-         socket
-         |> reset_pending()
-         |> refresh_latest_section(socket.assigns.latest_page)
-         |> maybe_refresh_graph_for_mode()}
+  defp save_measurement(socket, :blood_pressure, params),
+    do: persist_measurement(socket, BloodPressures.create_blood_pressure(params))
 
-      {:error, %Ecto.Changeset{}} ->
-        {:noreply, put_flash(socket, :error, "保存に失敗しました")}
-    end
+  defp save_measurement(socket, :weight, params),
+    do: persist_measurement(socket, Weights.create_weight(params))
+
+  defp persist_measurement(socket, {:ok, _saved_measurement}) do
+    {:noreply,
+     socket
+     |> reset_pending()
+     |> refresh_latest_section(socket.assigns.latest_page)
+     |> maybe_refresh_graph_for_mode()}
   end
 
-  defp save_weight(socket, weight_params) do
-    case Weights.create_weight(weight_params) do
-      {:ok, _weight} ->
-        {:noreply,
-         socket
-         |> reset_pending()
-         |> refresh_latest_section(socket.assigns.latest_page)
-         |> maybe_refresh_graph_for_mode()}
-
-      {:error, %Ecto.Changeset{}} ->
-        {:noreply, put_flash(socket, :error, "保存に失敗しました")}
-    end
-  end
+  defp persist_measurement(socket, {:error, %Ecto.Changeset{}}),
+    do: {:noreply, put_flash(socket, :error, "保存に失敗しました")}
 
   defp parse_measurement_response(""), do: {:error, :parse}
   defp parse_measurement_response("error"), do: {:error, :classification}
@@ -429,14 +420,13 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
   defp total_pages(0, _per_page), do: 1
   defp total_pages(total_count, per_page), do: div(total_count + per_page - 1, per_page)
 
-  defp graph_measurements_for_mode(socket) do
-    if socket.assigns.graph_sync_latest_page do
-      socket.assigns.latest_daily_measurements
-    else
-      socket.assigns.graph_range
-      |> all_daily_measurements_for_range()
-    end
-  end
+  defp graph_measurements_for_mode(%{
+         assigns: %{graph_sync_latest_page: true, latest_daily_measurements: measurements}
+       }),
+       do: measurements
+
+  defp graph_measurements_for_mode(%{assigns: %{graph_range: range}}),
+    do: all_daily_measurements_for_range(range)
 
   defp maybe_refresh_graph_for_mode(socket) do
     daily_measurements = graph_measurements_for_mode(socket)
@@ -562,40 +552,42 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
   defp error_to_string(:not_accepted), do: "You have selected an unacceptable file type"
 
   defp handle_progress(:avatar, entry, socket) do
-    if entry.done? do
-      upload_result =
-        consume_uploaded_entry(socket, entry, fn %{path: path} ->
-          {:ok,
-           %{
-             response: run(path),
-             image_data_url: image_data_url(path),
-             measured_at: measured_at_from_entry(entry)
-           }}
-        end)
+    case entry.done? do
+      true ->
+        upload_result =
+          consume_uploaded_entry(socket, entry, fn %{path: path} ->
+            {:ok,
+             %{
+               response: run(path),
+               image_data_url: image_data_url(path),
+               measured_at: measured_at_from_entry(entry)
+             }}
+          end)
 
-      preview_image = upload_result && upload_result.image_data_url
-      measured_at = upload_result && upload_result.measured_at
+        preview_image = upload_result && upload_result.image_data_url
+        measured_at = upload_result && upload_result.measured_at
 
-      socket =
-        case parse_measurement_response(upload_result && upload_result.response) do
-          {:ok, measurement_params} ->
-            pending_measurement = Map.put(measurement_params, :measured_at, measured_at)
+        socket =
+          case parse_measurement_response(upload_result && upload_result.response) do
+            {:ok, measurement_params} ->
+              pending_measurement = Map.put(measurement_params, :measured_at, measured_at)
 
-            socket
-            |> assign(:pending_measurement, pending_measurement)
-            |> assign(:pending_image_data_url, preview_image)
-            |> assign(:confirm_form, confirm_form(pending_measurement))
+              socket
+              |> assign(:pending_measurement, pending_measurement)
+              |> assign(:pending_image_data_url, preview_image)
+              |> assign(:confirm_form, confirm_form(pending_measurement))
 
-          {:error, :classification} ->
-            put_flash(socket, :error, "血圧か体重かを判定できませんでした")
+            {:error, :classification} ->
+              put_flash(socket, :error, "血圧か体重かを判定できませんでした")
 
-          {:error, :parse} ->
-            put_flash(socket, :error, "画像から数値を読み取れませんでした")
-        end
+            {:error, :parse} ->
+              put_flash(socket, :error, "画像から数値を読み取れませんでした")
+          end
 
-      {:noreply, socket}
-    else
-      {:noreply, socket}
+        {:noreply, socket}
+
+      false ->
+        {:noreply, socket}
     end
   end
 
@@ -603,8 +595,9 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
     endpoint_config =
       Application.get_env(:blood_pressure_record, BloodPressureRecordWeb.Endpoint, [])
 
-    if Keyword.get(endpoint_config, :code_reloader, false) do
-      Logger.debug("Ollama response: #{inspect(response)}")
+    case Keyword.get(endpoint_config, :code_reloader, false) do
+      true -> Logger.debug("Ollama response: #{inspect(response)}")
+      false -> :ok
     end
   end
 
