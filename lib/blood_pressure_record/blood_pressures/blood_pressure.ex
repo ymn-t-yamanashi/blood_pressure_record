@@ -16,5 +16,20 @@ defmodule BloodPressureRecord.BloodPressures.BloodPressure do
     blood_pressure
     |> cast(attrs, [:systolic, :diastolic, :pulse, :measured_at])
     |> validate_required([:systolic, :diastolic, :pulse, :measured_at])
+    |> validate_number(:systolic,
+      greater_than_or_equal_to: 60,
+      less_than_or_equal_to: 250,
+      message: "60〜250の範囲で入力してください"
+    )
+    |> validate_number(:diastolic,
+      greater_than_or_equal_to: 30,
+      less_than_or_equal_to: 150,
+      message: "30〜150の範囲で入力してください"
+    )
+    |> validate_number(:pulse,
+      greater_than_or_equal_to: 30,
+      less_than_or_equal_to: 200,
+      message: "30〜200の範囲で入力してください"
+    )
   end
 end

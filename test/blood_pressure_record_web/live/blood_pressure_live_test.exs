@@ -4,8 +4,8 @@ defmodule BloodPressureRecordWeb.BloodPressureLiveTest do
   import Phoenix.LiveViewTest
   import BloodPressureRecord.BloodPressuresFixtures
 
-  @create_attrs %{systolic: 42, diastolic: 42, pulse: 42, measured_at: "2025-11-30T02:55:00"}
-  @update_attrs %{systolic: 43, diastolic: 43, pulse: 43, measured_at: "2025-12-01T02:55:00"}
+  @create_attrs %{systolic: 118, diastolic: 72, pulse: 62, measured_at: "2025-11-30T02:55:00"}
+  @update_attrs %{systolic: 121, diastolic: 76, pulse: 70, measured_at: "2025-12-01T02:55:00"}
   @invalid_attrs %{systolic: nil, diastolic: nil, pulse: nil, measured_at: nil}
   defp create_blood_pressure(_) do
     blood_pressure = blood_pressure_fixture()
@@ -19,7 +19,7 @@ defmodule BloodPressureRecordWeb.BloodPressureLiveTest do
     test "lists all blood_pressures", %{conn: conn} do
       {:ok, _index_live, html} = live(conn, ~p"/blood_pressures")
 
-      assert html =~ "Listing Blood pressures"
+      assert html =~ "血圧一覧"
     end
 
     test "saves new blood_pressure", %{conn: conn} do
@@ -27,11 +27,11 @@ defmodule BloodPressureRecordWeb.BloodPressureLiveTest do
 
       assert {:ok, form_live, _} =
                index_live
-               |> element("a", "New Blood pressure")
+               |> element("a", "血圧を追加")
                |> render_click()
                |> follow_redirect(conn, ~p"/blood_pressures/new")
 
-      assert render(form_live) =~ "New Blood pressure"
+      assert render(form_live) =~ "血圧を追加"
 
       assert form_live
              |> form("#blood_pressure-form", blood_pressure: @invalid_attrs)
@@ -44,7 +44,7 @@ defmodule BloodPressureRecordWeb.BloodPressureLiveTest do
                |> follow_redirect(conn, ~p"/blood_pressures")
 
       html = render(index_live)
-      assert html =~ "Blood pressure created successfully"
+      assert html =~ "作成しました"
     end
 
     test "updates blood_pressure in listing", %{conn: conn, blood_pressure: blood_pressure} do
@@ -52,11 +52,11 @@ defmodule BloodPressureRecordWeb.BloodPressureLiveTest do
 
       assert {:ok, form_live, _html} =
                index_live
-               |> element("#blood_pressures-#{blood_pressure.id} a", "Edit")
+               |> element("#blood_pressures-#{blood_pressure.id} a", "編集")
                |> render_click()
                |> follow_redirect(conn, ~p"/blood_pressures/#{blood_pressure}/edit")
 
-      assert render(form_live) =~ "Edit Blood pressure"
+      assert render(form_live) =~ "血圧を編集"
 
       assert form_live
              |> form("#blood_pressure-form", blood_pressure: @invalid_attrs)
@@ -69,14 +69,14 @@ defmodule BloodPressureRecordWeb.BloodPressureLiveTest do
                |> follow_redirect(conn, ~p"/blood_pressures")
 
       html = render(index_live)
-      assert html =~ "Blood pressure updated successfully"
+      assert html =~ "更新しました"
     end
 
     test "deletes blood_pressure in listing", %{conn: conn, blood_pressure: blood_pressure} do
       {:ok, index_live, _html} = live(conn, ~p"/blood_pressures")
 
       assert index_live
-             |> element("#blood_pressures-#{blood_pressure.id} a", "Delete")
+             |> element("#blood_pressures-#{blood_pressure.id} a", "削除")
              |> render_click()
 
       refute has_element?(index_live, "#blood_pressures-#{blood_pressure.id}")
@@ -89,7 +89,7 @@ defmodule BloodPressureRecordWeb.BloodPressureLiveTest do
     test "displays blood_pressure", %{conn: conn, blood_pressure: blood_pressure} do
       {:ok, _show_live, html} = live(conn, ~p"/blood_pressures/#{blood_pressure}")
 
-      assert html =~ "Show Blood pressure"
+      assert html =~ "血圧詳細"
     end
 
     test "updates blood_pressure and returns to show", %{
@@ -100,14 +100,14 @@ defmodule BloodPressureRecordWeb.BloodPressureLiveTest do
 
       assert {:ok, form_live, _} =
                show_live
-               |> element("a", "Edit")
+               |> element("a", "編集")
                |> render_click()
                |> follow_redirect(
                  conn,
                  ~p"/blood_pressures/#{blood_pressure}/edit?return_to=show"
                )
 
-      assert render(form_live) =~ "Edit Blood pressure"
+      assert render(form_live) =~ "血圧を編集"
 
       assert form_live
              |> form("#blood_pressure-form", blood_pressure: @invalid_attrs)
@@ -120,7 +120,7 @@ defmodule BloodPressureRecordWeb.BloodPressureLiveTest do
                |> follow_redirect(conn, ~p"/blood_pressures/#{blood_pressure}")
 
       html = render(show_live)
-      assert html =~ "Blood pressure updated successfully"
+      assert html =~ "更新しました"
     end
   end
 
@@ -134,6 +134,7 @@ defmodule BloodPressureRecordWeb.BloodPressureLiveTest do
       assert has_element?(view, "#upload-graph-series-form")
       assert has_element?(view, "#upload-visibility-systolic[checked]")
       assert has_element?(view, "#upload-visibility-diastolic[checked]")
+      assert has_element?(view, "#upload-visibility-weight[checked]")
       refute has_element?(view, "#upload-visibility-pulse[checked]")
       assert has_element?(view, "#graph-series-both[checked]")
       refute has_element?(view, "#graph-series-actual[checked]")
@@ -150,6 +151,7 @@ defmodule BloodPressureRecordWeb.BloodPressureLiveTest do
 
       refute has_element?(view, "#upload-visibility-systolic[checked]")
       refute has_element?(view, "#upload-visibility-diastolic[checked]")
+      refute has_element?(view, "#upload-visibility-weight[checked]")
       assert has_element?(view, "#upload-visibility-pulse[checked]")
       assert has_element?(view, "img")
     end

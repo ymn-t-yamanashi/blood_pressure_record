@@ -7,11 +7,18 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
   @metric_options [
     {"systolic", "最高血圧"},
     {"diastolic", "最低血圧"},
-    {"pulse", "脈拍"}
+    {"pulse", "脈拍"},
+    {"weight", "体重"}
   ]
-  @default_visible_metrics ["systolic", "diastolic"]
+  @default_visible_metrics ["systolic", "diastolic", "weight"]
   @graph_series_modes ["actual", "average", "both"]
   @graph_domain_min 50
+  @metric_colors %{
+    "最高血圧" => "#ef4444",
+    "最低血圧" => "#f59e0b",
+    "脈拍" => "#10b981",
+    "体重" => "#2563eb"
+  }
   @metric_thresholds %{
     "systolic" => [
       %{value: 114, color: "#10b981"},
@@ -32,16 +39,29 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
     """
   end
 
-  def build_image_data(blood_pressures, opts \\ []) do
+  def build_image_data(daily_measurements, opts \\ []) do
     width = Keyword.get(opts, :width, 600)
     height = Keyword.get(opts, :height, 400)
     visible_metrics = Keyword.get(opts, :visible_metrics, @default_visible_metrics)
     graph_series_mode = Keyword.get(opts, :graph_series_mode, "both")
 
-    blood_pressures
+    data =
+      daily_measurements
+      |> Enum.flat_map(&to_graph_data/1)
+      |> Enum.filter(&visible_metric?(&1.type, visible_metrics))
+
+    if data == [] do
+      nil
+    else
+      draw_graph(data, width, height, graph_series_mode)
+    end
+  end
+
+  def has_data?(daily_measurements, visible_metrics) do
+    daily_measurements
     |> Enum.flat_map(&to_graph_data/1)
     |> Enum.filter(&visible_metric?(&1.type, visible_metrics))
-    |> draw_graph(width, height, graph_series_mode)
+    |> Kernel.!=([])
   end
 
   def metric_options, do: @metric_options
@@ -62,14 +82,26 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
   def normalize_graph_series_mode(mode) when mode in @graph_series_modes, do: mode
   def normalize_graph_series_mode(_mode), do: default_graph_series_mode()
 
-  defp to_graph_data(data) do
-    date = NaiveDateTime.to_date(data.measured_at)
+  defp to_graph_data(%{date: date, blood_pressure: blood_pressure, weight: weight}) do
+    blood_pressure_points =
+      if blood_pressure do
+        [
+          %{date: date, type: "最高血圧", value: blood_pressure.systolic},
+          %{date: date, type: "最低血圧", value: blood_pressure.diastolic},
+          %{date: date, type: "脈拍", value: blood_pressure.pulse}
+        ]
+      else
+        []
+      end
 
-    [
-      %{date: date, type: "最高血圧", value: data.systolic},
-      %{date: date, type: "最低血圧", value: data.diastolic},
-      %{date: date, type: "脈拍", value: data.pulse}
-    ]
+    weight_points =
+      if weight do
+        [%{date: date, type: "体重", value: Decimal.to_float(weight.weight)}]
+      else
+        []
+      end
+
+    blood_pressure_points ++ weight_points
   end
 
   defp draw_graph(data, width, height, graph_series_mode) do
@@ -110,7 +142,14 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
           tick_count: 24
         ]
       )
-      |> Vl.encode_field(:color, "type", type: :nominal, title: "測定項目")
+      |> Vl.encode_field(:color, "type",
+        type: :nominal,
+        title: "測定項目",
+        scale: [
+          domain: Map.keys(@metric_colors),
+          range: Map.values(@metric_colors)
+        ]
+      )
 
     threshold_lines =
       Vl.new()
@@ -132,7 +171,14 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
       |> Vl.mark(:line, stroke_width: 2, opacity: 0.85, point: [size: 20])
       |> Vl.encode_field(:x, "date", type: :temporal)
       |> Vl.encode_field(:y, "value", type: :quantitative, scale: [domain_min: @graph_domain_min])
-      |> Vl.encode_field(:color, "type", type: :nominal, title: "測定項目")
+      |> Vl.encode_field(:color, "type",
+        type: :nominal,
+        title: "測定項目",
+        scale: [
+          domain: Map.keys(@metric_colors),
+          range: Map.values(@metric_colors)
+        ]
+      )
 
     layers =
       case graph_series_mode do
@@ -239,8 +285,10 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
   defp metric_key(%{type: "最高血圧"}), do: "systolic"
   defp metric_key(%{type: "最低血圧"}), do: "diastolic"
   defp metric_key(%{type: "脈拍"}), do: "pulse"
+  defp metric_key(%{type: "体重"}), do: "weight"
 
   defp visible_metric?("最高血圧", visible_metrics), do: "systolic" in visible_metrics
   defp visible_metric?("最低血圧", visible_metrics), do: "diastolic" in visible_metrics
   defp visible_metric?("脈拍", visible_metrics), do: "pulse" in visible_metrics
+  defp visible_metric?("体重", visible_metrics), do: "weight" in visible_metrics
 end

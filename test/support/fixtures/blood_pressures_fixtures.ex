@@ -11,10 +11,10 @@ defmodule BloodPressureRecord.BloodPressuresFixtures do
     {:ok, blood_pressure} =
       attrs
       |> Enum.into(%{
-        diastolic: 42,
+        diastolic: 72,
         measured_at: ~N[2025-11-30 02:55:00],
-        pulse: 42,
-        systolic: 42
+        pulse: 62,
+        systolic: 118
       })
       |> BloodPressureRecord.BloodPressures.create_blood_pressure()
 

@@ -10,17 +10,17 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.Form do
     <Layouts.app flash={@flash}>
       <.header>
         {@page_title}
-        <:subtitle>Use this form to manage blood_pressure records in your database.</:subtitle>
+        <:subtitle>血圧の記録を管理します。</:subtitle>
       </.header>
 
       <.form for={@form} id="blood_pressure-form" phx-change="validate" phx-submit="save">
-        <.input field={@form[:systolic]} type="number" label="Systolic" />
-        <.input field={@form[:diastolic]} type="number" label="Diastolic" />
-        <.input field={@form[:pulse]} type="number" label="Pulse" />
-        <.input field={@form[:measured_at]} type="datetime-local" label="Measured at" />
+        <.input field={@form[:systolic]} type="number" label="最高血圧" />
+        <.input field={@form[:diastolic]} type="number" label="最低血圧" />
+        <.input field={@form[:pulse]} type="number" label="脈拍" />
+        <.input field={@form[:measured_at]} type="datetime-local" label="測定日時" />
         <footer>
-          <.button phx-disable-with="Saving..." variant="primary">Save Blood pressure</.button>
-          <.button navigate={return_path(@return_to, @blood_pressure)}>Cancel</.button>
+          <.button phx-disable-with="Saving..." variant="primary">保存</.button>
+          <.button navigate={return_path(@return_to, @blood_pressure)}>キャンセル</.button>
         </footer>
       </.form>
     </Layouts.app>
@@ -42,16 +42,18 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.Form do
     blood_pressure = BloodPressures.get_blood_pressure!(id)
 
     socket
-    |> assign(:page_title, "Edit Blood pressure")
+    |> assign(:page_title, "血圧を編集")
     |> assign(:blood_pressure, blood_pressure)
     |> assign(:form, to_form(BloodPressures.change_blood_pressure(blood_pressure)))
   end
 
   defp apply_action(socket, :new, _params) do
-    blood_pressure = %BloodPressure{}
+    today = Date.utc_today()
+    measured_at = NaiveDateTime.new!(today, ~T[00:00:00])
+    blood_pressure = %BloodPressure{measured_at: measured_at}
 
     socket
-    |> assign(:page_title, "New Blood pressure")
+    |> assign(:page_title, "血圧を追加")
     |> assign(:blood_pressure, blood_pressure)
     |> assign(:form, to_form(BloodPressures.change_blood_pressure(blood_pressure)))
   end
@@ -76,7 +78,7 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.Form do
       {:ok, blood_pressure} ->
         {:noreply,
          socket
-         |> put_flash(:info, "Blood pressure updated successfully")
+         |> put_flash(:info, "更新しました")
          |> push_navigate(to: return_path(socket.assigns.return_to, blood_pressure))}
 
       {:error, %Ecto.Changeset{} = changeset} ->
@@ -89,7 +91,7 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.Form do
       {:ok, blood_pressure} ->
         {:noreply,
          socket
-         |> put_flash(:info, "Blood pressure created successfully")
+         |> put_flash(:info, "作成しました")
          |> push_navigate(to: return_path(socket.assigns.return_to, blood_pressure))}
 
       {:error, %Ecto.Changeset{} = changeset} ->

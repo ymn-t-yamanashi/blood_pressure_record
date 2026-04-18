@@ -98,7 +98,7 @@ defmodule BloodPressureRecord.MixProject do
       ],
       precommit: ["compile --warnings-as-errors", "deps.unlock --unused", "format", "test"],
       "db.backup": [
-        "run -e 'Ecto.Adapters.SQL.query!(BloodPressureRecord.Repo, \"VACUUM INTO \\'#{Date.utc_today()}_blood_pressure_record_dev.db\\' \")'"
+        "run -e 'backup_dir = \"backup\"; File.mkdir_p!(backup_dir); backup_file = Path.join(backup_dir, \"#{Date.utc_today()}_blood_pressure_record_dev.db\"); sql = \"VACUUM INTO \\'\" <> backup_file <> \"\\'\"; Ecto.Adapters.SQL.query!(BloodPressureRecord.Repo, sql)'"
       ]
     ]
   end

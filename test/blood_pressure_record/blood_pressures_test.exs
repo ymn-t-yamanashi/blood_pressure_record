@@ -22,18 +22,18 @@ defmodule BloodPressureRecord.BloodPressuresTest do
 
     test "create_blood_pressure/1 with valid data creates a blood_pressure" do
       valid_attrs = %{
-        systolic: 42,
-        diastolic: 42,
-        pulse: 42,
+        systolic: 118,
+        diastolic: 72,
+        pulse: 62,
         measured_at: ~N[2025-11-30 02:55:00]
       }
 
       assert {:ok, %BloodPressure{} = blood_pressure} =
                BloodPressures.create_blood_pressure(valid_attrs)
 
-      assert blood_pressure.systolic == 42
-      assert blood_pressure.diastolic == 42
-      assert blood_pressure.pulse == 42
+      assert blood_pressure.systolic == 118
+      assert blood_pressure.diastolic == 72
+      assert blood_pressure.pulse == 62
       assert blood_pressure.measured_at == ~N[2025-11-30 02:55:00]
     end
 
@@ -45,18 +45,18 @@ defmodule BloodPressureRecord.BloodPressuresTest do
       blood_pressure = blood_pressure_fixture()
 
       update_attrs = %{
-        systolic: 43,
-        diastolic: 43,
-        pulse: 43,
+        systolic: 121,
+        diastolic: 76,
+        pulse: 70,
         measured_at: ~N[2025-12-01 02:55:00]
       }
 
       assert {:ok, %BloodPressure{} = blood_pressure} =
                BloodPressures.update_blood_pressure(blood_pressure, update_attrs)
 
-      assert blood_pressure.systolic == 43
-      assert blood_pressure.diastolic == 43
-      assert blood_pressure.pulse == 43
+      assert blood_pressure.systolic == 121
+      assert blood_pressure.diastolic == 76
+      assert blood_pressure.pulse == 70
       assert blood_pressure.measured_at == ~N[2025-12-01 02:55:00]
     end
 

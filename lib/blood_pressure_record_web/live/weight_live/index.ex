@@ -1,8 +1,9 @@
-defmodule BloodPressureRecordWeb.BloodPressureLive.Index do
+defmodule BloodPressureRecordWeb.WeightLive.Index do
   use BloodPressureRecordWeb, :live_view
 
-  alias BloodPressureRecord.BloodPressures
+  alias BloodPressureRecord.Weights
   alias BloodPressureRecordWeb.SharedFormatting
+
   @per_page 31
 
   @impl true
@@ -10,39 +11,32 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.Index do
     ~H"""
     <Layouts.app flash={@flash}>
       <.header>
-        血圧一覧
+        体重一覧
         <:actions>
-          <.button variant="primary" navigate={~p"/up"}>
-            <.icon name="hero-plus" /> AIで記録
-          </.button>
-          <.button variant="primary" navigate={~p"/blood_pressures/new"}>
-            <.icon name="hero-plus" /> 血圧を追加
+          <.button variant="primary" navigate={~p"/weights/new"}>
+            <.icon name="hero-plus" /> 体重を追加
           </.button>
         </:actions>
       </.header>
 
       <.table
-        id="blood_pressures"
-        rows={@streams.blood_pressures}
-        row_click={
-          fn {_id, blood_pressure} -> JS.navigate(~p"/blood_pressures/#{blood_pressure}") end
-        }
+        id="weights"
+        rows={@streams.weights}
+        row_click={fn {_id, weight} -> JS.navigate(~p"/weights/#{weight}") end}
       >
-        <:col :let={{_id, blood_pressure}} label="測定日時">
-          {SharedFormatting.format_datetime(blood_pressure.measured_at)}
+        <:col :let={{_id, weight}} label="測定日時">
+          {SharedFormatting.format_datetime(weight.measured_at)}
         </:col>
-        <:col :let={{_id, blood_pressure}} label="最高血圧">{blood_pressure.systolic}</:col>
-        <:col :let={{_id, blood_pressure}} label="最低血圧">{blood_pressure.diastolic}</:col>
-        <:col :let={{_id, blood_pressure}} label="脈拍">{blood_pressure.pulse}</:col>
-        <:action :let={{_id, blood_pressure}}>
+        <:col :let={{_id, weight}} label="体重(kg)">{format_weight(weight.weight)}</:col>
+        <:action :let={{_id, weight}}>
           <div class="sr-only">
-            <.link navigate={~p"/blood_pressures/#{blood_pressure}"}>詳細</.link>
+            <.link navigate={~p"/weights/#{weight}"}>詳細</.link>
           </div>
-          <.link navigate={~p"/blood_pressures/#{blood_pressure}/edit"}>編集</.link>
+          <.link navigate={~p"/weights/#{weight}/edit"}>編集</.link>
         </:action>
-        <:action :let={{id, blood_pressure}}>
+        <:action :let={{id, weight}}>
           <.link
-            phx-click={JS.push("delete", value: %{id: blood_pressure.id}) |> hide("##{id}")}
+            phx-click={JS.push("delete", value: %{id: weight.id}) |> hide("##{id}")}
             data-confirm="この記録を削除しますか？"
           >
             削除
@@ -58,7 +52,7 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.Index do
         <div class="flex items-center gap-2">
           <%= if @page > 1 do %>
             <.link
-              patch={~p"/blood_pressures?page=#{@page - 1}"}
+              patch={~p"/weights?page=#{@page - 1}"}
               class="rounded-md border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
             >
               Previous
@@ -71,7 +65,7 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.Index do
 
           <%= if @page < @total_pages do %>
             <.link
-              patch={~p"/blood_pressures?page=#{@page + 1}"}
+              patch={~p"/weights?page=#{@page + 1}"}
               class="rounded-md border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
             >
               Next
@@ -91,49 +85,47 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.Index do
   def mount(_params, _session, socket) do
     {:ok,
      socket
-     |> assign(:page_title, "血圧一覧")
+     |> assign(:page_title, "体重一覧")
      |> assign(:page, 1)
      |> assign(:total_count, 0)
      |> assign(:total_pages, 1)
-     |> stream(:blood_pressures, [])}
+     |> stream(:weights, [])}
   end
 
   @impl true
   def handle_params(params, _uri, socket) do
     page = params |> Map.get("page") |> parse_page()
-    total_count = BloodPressures.count_blood_pressures()
+    total_count = Weights.count_weights()
     total_pages = total_pages(total_count)
     current_page = min(page, total_pages)
-    blood_pressures = list_blood_pressures(current_page)
+    weights = list_weights(current_page)
 
     {:noreply,
      socket
      |> assign(:page, current_page)
      |> assign(:total_count, total_count)
      |> assign(:total_pages, total_pages)
-     |> stream(:blood_pressures, blood_pressures, reset: true)}
+     |> stream(:weights, weights, reset: true)}
   end
 
   @impl true
   def handle_event("delete", %{"id" => id}, socket) do
-    blood_pressure = BloodPressures.get_blood_pressure!(id)
-    {:ok, _} = BloodPressures.delete_blood_pressure(blood_pressure)
+    weight = Weights.get_weight!(id)
+    {:ok, _} = Weights.delete_weight(weight)
     total_count = max(socket.assigns.total_count - 1, 0)
     total_pages = total_pages(total_count)
     current_page = min(socket.assigns.page, total_pages)
-    blood_pressures = list_blood_pressures(current_page)
+    weights = list_weights(current_page)
 
     {:noreply,
      socket
      |> assign(:page, current_page)
      |> assign(:total_count, total_count)
      |> assign(:total_pages, total_pages)
-     |> stream(:blood_pressures, blood_pressures, reset: true)}
+     |> stream(:weights, weights, reset: true)}
   end
 
-  defp list_blood_pressures(page) do
-    BloodPressures.list_blood_pressures(page: page, per_page: @per_page)
-  end
+  defp list_weights(page), do: Weights.list_weights(page: page, per_page: @per_page)
 
   defp parse_page(nil), do: 1
 
@@ -144,7 +136,11 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.Index do
     end
   end
 
-  defp total_pages(total_count) do
-    max(div(total_count + @per_page - 1, @per_page), 1)
+  defp total_pages(total_count), do: max(div(total_count + @per_page - 1, @per_page), 1)
+
+  defp format_weight(weight) do
+    weight
+    |> Decimal.round(1)
+    |> Decimal.to_string(:normal)
   end
 end
