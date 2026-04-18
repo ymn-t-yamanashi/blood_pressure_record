@@ -237,7 +237,6 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
       {:ok, _blood_pressure} ->
         {:noreply,
          socket
-         |> put_flash(:info, "作成しました")
          |> reset_pending()
          |> refresh_latest_section(socket.assigns.latest_page)
          |> maybe_refresh_graph_for_mode()}
@@ -252,7 +251,6 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
       {:ok, _weight} ->
         {:noreply,
          socket
-         |> put_flash(:info, "作成しました")
          |> reset_pending()
          |> refresh_latest_section(socket.assigns.latest_page)
          |> maybe_refresh_graph_for_mode()}
