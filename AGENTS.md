@@ -76,6 +76,27 @@
           assign(socket, :val, val)
         end
 
+- `if` の使用は原則として最小化し、分岐の第一選択は関数ヘッドのパターンマッチにすること。`if` は単純な真偽1条件の短い分岐にだけ使うこと
+- データの形（`%Struct{}`、`[]`、`[head | tail]`、`{:ok, value}`、`{:error, reason}` など）で分岐する場合は、**必ず** 関数パターンマッチで分けること
+
+  **次の書き方は避けること（非推奨）**:
+
+      def persist(result) do
+        if match?({:ok, _}, result) do
+          {:ok, value} = result
+          save(value)
+        else
+          {:error, :invalid_result}
+        end
+      end
+
+  **代わりに次のように書くこと（推奨）**:
+
+      def persist({:ok, value}), do: save(value)
+      def persist({:error, _reason}), do: {:error, :invalid_result}
+
+- 複数条件の分岐は `if` のネストで書かず、`cond` または `case` を使うこと。段階的な成功/失敗の連鎖は `with` を使うこと
+
 - 複数のモジュールを同じファイルにネストして定義することは **絶対にしないこと**。循環依存やコンパイルエラーの原因になります
 - struct はデフォルトで Access ビヘイビアを実装していないため、struct に対して map access 構文 (`changeset[:field]`) を **絶対に** 使わないこと。通常の struct では `my_struct.field` のように直接アクセスするか、利用可能ならより高レベルな API を使うこと。changeset なら `Ecto.Changeset.get_field/2` を使います
 - Elixir 標準ライブラリには日付と時刻の操作に必要なものが揃っています。`Time`、`Date`、`DateTime`、`Calendar` の主要インターフェースに慣れておくこと。追加依存は、依頼された場合または日時パース用途（その場合は `date_time_parser` パッケージを使ってよい）を除いて **導入しないこと**
