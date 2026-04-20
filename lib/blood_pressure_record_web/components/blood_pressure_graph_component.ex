@@ -13,6 +13,9 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
   @default_visible_metrics ["systolic", "diastolic", "weight"]
   @graph_series_modes ["actual", "average", "both"]
   @graph_domain_min 50
+  @default_height_cm 168.0
+  @standard_weight_bmi 22.0
+  @weight_standard_line_color "#16a34a"
   @metric_colors %{
     "最高血圧" => "#ef4444",
     "最低血圧" => "#f59e0b",
@@ -44,6 +47,7 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
     height = Keyword.get(opts, :height, 400)
     visible_metrics = Keyword.get(opts, :visible_metrics, @default_visible_metrics)
     graph_series_mode = Keyword.get(opts, :graph_series_mode, "both")
+    height_cm = Keyword.get(opts, :height_cm, @default_height_cm)
 
     data =
       daily_measurements
@@ -53,7 +57,7 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
     if data == [] do
       nil
     else
-      draw_graph(data, width, height, graph_series_mode)
+      draw_graph(data, width, height, graph_series_mode, visible_metrics, height_cm)
     end
   end
 
@@ -104,10 +108,10 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
     blood_pressure_points ++ weight_points
   end
 
-  defp draw_graph(data, width, height, graph_series_mode) do
+  defp draw_graph(data, width, height, graph_series_mode, visible_metrics, height_cm) do
     month_first_dates = month_first_dates(data)
     averages = fifteen_day_averages(data)
-    thresholds = threshold_lines(data)
+    thresholds = threshold_lines(data, visible_metrics, height_cm)
 
     line_chart =
       Vl.new()
@@ -270,16 +274,37 @@ defmodule BloodPressureRecordWeb.BloodPressureGraphComponent do
 
   defp fifteen_day_bucket(date, min_date), do: div(Date.diff(date, min_date), 15)
 
-  defp threshold_lines(data) do
-    data
-    |> Enum.map(&metric_key/1)
-    |> Enum.uniq()
-    |> Enum.flat_map(fn metric ->
-      Map.get(@metric_thresholds, metric, [])
-      |> Enum.map(fn %{value: value, color: color} ->
-        %{threshold: value, color: color}
+  defp threshold_lines(data, visible_metrics, height_cm) do
+    metric_thresholds =
+      data
+      |> Enum.map(&metric_key/1)
+      |> Enum.uniq()
+      |> Enum.flat_map(fn metric ->
+        Map.get(@metric_thresholds, metric, [])
+        |> Enum.map(fn %{value: value, color: color} ->
+          %{threshold: value, color: color}
+        end)
       end)
-    end)
+
+    weight_standard_threshold =
+      case weight_standard_threshold(data, visible_metrics, height_cm) do
+        nil -> []
+        threshold -> [threshold]
+      end
+
+    metric_thresholds ++ weight_standard_threshold
+  end
+
+  defp weight_standard_threshold(data, visible_metrics, height_cm) do
+    has_weight_data? = Enum.any?(data, &(&1.type == "体重"))
+
+    if "weight" in visible_metrics and has_weight_data? do
+      height_m = height_cm / 100.0
+      standard_weight = Float.round(@standard_weight_bmi * height_m * height_m, 1)
+      %{threshold: standard_weight, color: @weight_standard_line_color}
+    else
+      nil
+    end
   end
 
   defp metric_key(%{type: "最高血圧"}), do: "systolic"

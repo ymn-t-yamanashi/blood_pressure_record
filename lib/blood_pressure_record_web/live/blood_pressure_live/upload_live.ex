@@ -190,7 +190,8 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
      socket
      |> assign(:height_cm, height_cm)
      |> assign(:weight_profile_form, weight_profile_form(height_cm))
-     |> refresh_latest_section(socket.assigns.latest_page)}
+     |> refresh_latest_section(socket.assigns.latest_page)
+     |> maybe_refresh_graph_for_mode()}
   end
 
   def handle_event("update-height-cm", _params, socket), do: {:noreply, socket}
@@ -488,7 +489,8 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
         width: 1200,
         height: 800,
         visible_metrics: socket.assigns.visible_metrics,
-        graph_series_mode: socket.assigns.graph_series_mode
+        graph_series_mode: socket.assigns.graph_series_mode,
+        height_cm: socket.assigns.height_cm
       )
     )
     |> assign(:graph_has_data, has_data)
