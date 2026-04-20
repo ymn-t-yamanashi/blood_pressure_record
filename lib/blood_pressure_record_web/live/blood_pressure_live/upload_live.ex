@@ -10,6 +10,7 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
   alias Evision, as: Ev
   alias Evision.ColorConversionCodes, as: Evc
 
+  @default_height_cm 168.0
   @latest_per_page 15
 
   @impl Phoenix.LiveView
@@ -18,6 +19,7 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
     graph_sync_latest_page = false
     visible_metrics = BloodPressureGraphComponent.default_visible_metrics()
     graph_series_mode = BloodPressureGraphComponent.default_graph_series_mode()
+    height_cm = @default_height_cm
     latest_page = 1
 
     socket =
@@ -31,6 +33,8 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
       |> assign(:graph_metric_options, BloodPressureGraphComponent.metric_options())
       |> assign(:graph_series_mode, graph_series_mode)
       |> assign(:visible_metrics, visible_metrics)
+      |> assign(:height_cm, height_cm)
+      |> assign(:weight_profile_form, weight_profile_form(height_cm))
       |> assign(:graph_visibility_form, to_form(%{"visibility" => visible_metrics}, as: :graph))
       |> assign(
         :graph_series_form,
@@ -173,6 +177,23 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
       _ -> {:noreply, socket}
     end
   end
+
+  @impl Phoenix.LiveView
+  def handle_event(
+        "update-height-cm",
+        %{"weight_profile" => %{"height_cm" => height_value}},
+        socket
+      ) do
+    height_cm = parse_height_cm(height_value, socket.assigns.height_cm)
+
+    {:noreply,
+     socket
+     |> assign(:height_cm, height_cm)
+     |> assign(:weight_profile_form, weight_profile_form(height_cm))
+     |> refresh_latest_section(socket.assigns.latest_page)}
+  end
+
+  def handle_event("update-height-cm", _params, socket), do: {:noreply, socket}
 
   def run(file) do
     client = Ollama.init()
@@ -328,7 +349,7 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
     Measurements.list_daily_measurements(page: page, per_page: @latest_per_page)
   end
 
-  defp latest_averages([]) do
+  defp latest_averages([], _height_cm) do
     %{
       systolic: empty_metric(),
       diastolic: empty_metric(),
@@ -337,7 +358,7 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
     }
   end
 
-  defp latest_averages(daily_measurements) do
+  defp latest_averages(daily_measurements, height_cm) do
     systolic_values =
       daily_measurements
       |> Enum.map(fn item -> item.blood_pressure && item.blood_pressure.systolic end)
@@ -367,7 +388,7 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
       systolic: metric_summary(systolic_values, :systolic),
       diastolic: metric_summary(diastolic_values, :diastolic),
       pulse: metric_summary(pulse_values, :pulse),
-      weight: neutral_metric_summary(weight_values)
+      weight: bmi_metric_summary(weight_values, height_cm)
     }
   end
 
@@ -385,15 +406,37 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
     }
   end
 
-  defp neutral_metric_summary([]), do: empty_metric()
+  defp bmi_metric_summary([], _height_cm), do: empty_metric()
 
-  defp neutral_metric_summary(values) do
-    %{
-      value: average(values),
-      level_text: "記録あり",
-      container_class: "border-sky-200 bg-sky-50",
-      text_class: "text-sky-700"
-    }
+  defp bmi_metric_summary(values, height_cm) do
+    average_weight = average(values)
+    bmi = bmi(average_weight, height_cm)
+
+    case bmi_status(bmi) do
+      :over ->
+        %{
+          value: average_weight,
+          level_text: "太りすぎ (BMI #{format_metric_value(bmi)})",
+          container_class: "border-rose-300 bg-rose-50",
+          text_class: "text-rose-700"
+        }
+
+      :above_standard ->
+        %{
+          value: average_weight,
+          level_text: "標準より高め (BMI #{format_metric_value(bmi)})",
+          container_class: "border-amber-300 bg-amber-50",
+          text_class: "text-amber-700"
+        }
+
+      :standard ->
+        %{
+          value: average_weight,
+          level_text: "標準 (BMI #{format_metric_value(bmi)})",
+          container_class: "border-emerald-200 bg-emerald-50",
+          text_class: "text-emerald-700"
+        }
+    end
   end
 
   defp average(values) do
@@ -414,7 +457,10 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
     |> assign(:latest_total_pages, latest_total_pages)
     |> assign(:latest_total_count, latest_total_count)
     |> assign(:latest_daily_measurements, latest_daily_measurements)
-    |> assign(:latest_averages, latest_averages(latest_daily_measurements))
+    |> assign(
+      :latest_averages,
+      latest_averages(latest_daily_measurements, socket.assigns.height_cm)
+    )
   end
 
   defp total_pages(0, _per_page), do: 1
@@ -533,12 +579,54 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
     end
   end
 
+  def pending_measurement_container_class(%{type: :weight, weight: weight}, height_cm)
+      when is_number(weight) do
+    case bmi(weight, height_cm) |> bmi_status() do
+      :over -> "border-rose-300 bg-rose-50"
+      :above_standard -> "border-amber-300 bg-amber-50"
+      :standard -> "border-emerald-200 bg-emerald-50"
+    end
+  end
+
+  def pending_measurement_container_class(_pending_measurement, _height_cm),
+    do: "border-zinc-200 bg-zinc-50"
+
+  def weight_cell_class(nil, _height_cm), do: "bg-white"
+
+  def weight_cell_class(%Decimal{} = weight, height_cm) do
+    case bmi(Decimal.to_float(weight), height_cm) |> bmi_status() do
+      :over -> "bg-rose-50"
+      :above_standard -> "bg-amber-50"
+      :standard -> "bg-emerald-50"
+    end
+  end
+
   def format_metric_value(nil), do: "-"
 
   def format_metric_value(value) when is_float(value),
     do: :erlang.float_to_binary(value, decimals: 1)
 
   def format_metric_value(value), do: value
+
+  defp bmi(weight_kg, height_cm) do
+    height_m = height_cm / 100.0
+    Float.round(weight_kg / (height_m * height_m), 1)
+  end
+
+  defp bmi_status(bmi) when bmi >= 25.0, do: :over
+  defp bmi_status(bmi) when bmi > 22.0, do: :above_standard
+  defp bmi_status(_bmi), do: :standard
+
+  defp parse_height_cm(value, default_height_cm) do
+    case Float.parse(value || "") do
+      {height_cm, _rest} when height_cm >= 100.0 and height_cm <= 250.0 -> height_cm
+      _ -> default_height_cm
+    end
+  end
+
+  defp weight_profile_form(height_cm) do
+    to_form(%{"height_cm" => format_metric_value(height_cm)}, as: :weight_profile)
+  end
 
   def format_weight(nil), do: "-"
 

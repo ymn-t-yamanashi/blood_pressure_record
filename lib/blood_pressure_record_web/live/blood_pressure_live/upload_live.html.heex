@@ -22,7 +22,10 @@
       <%= if @pending_measurement do %>
         <section
           id="parsed-values"
-          class="rounded-xl border border-zinc-200 bg-zinc-50 p-2.5 lg:min-h-0 lg:flex-1 lg:overflow-auto"
+          class={[
+            "rounded-xl border p-2.5 lg:min-h-0 lg:flex-1 lg:overflow-auto",
+            pending_measurement_container_class(@pending_measurement, @height_cm)
+          ]}
         >
           <h3 class="text-sm font-semibold text-zinc-800">読み取り結果</h3>
           <%= if @pending_image_data_url do %>
@@ -211,8 +214,23 @@
           </div>
         </div>
         <div class={["rounded-lg border px-2 py-1", @latest_averages.weight.container_class]}>
-          <div class="flex items-center justify-between">
-            <span class="text-zinc-700">体重</span>
+          <div class="flex items-start justify-between gap-2">
+            <span class="pt-0.5 text-zinc-700">体重</span>
+            <.form
+              for={@weight_profile_form}
+              id="weight-profile-form"
+              phx-change="update-height-cm"
+              class="w-28"
+            >
+              <.input
+                field={@weight_profile_form[:height_cm]}
+                type="number"
+                step="0.1"
+                label="身長(cm)"
+                class="w-full input input-xs"
+                phx-debounce="blur"
+              />
+            </.form>
             <span class={["font-semibold", @latest_averages.weight.text_class]}>
               {@latest_averages.weight.level_text}
             </span>
@@ -307,7 +325,10 @@
               ]}>
                 {if(measurement.blood_pressure, do: measurement.blood_pressure.pulse, else: "-")}
               </td>
-              <td class="px-3 py-1">
+              <td class={[
+                "px-3 py-1",
+                weight_cell_class(measurement.weight && measurement.weight.weight, @height_cm)
+              ]}>
                 {if(measurement.weight, do: format_weight(measurement.weight.weight), else: "-")}
               </td>
             </tr>

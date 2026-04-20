@@ -3,6 +3,7 @@ defmodule BloodPressureRecordWeb.BloodPressureLiveTest do
 
   import Phoenix.LiveViewTest
   import BloodPressureRecord.BloodPressuresFixtures
+  import BloodPressureRecord.WeightsFixtures
 
   @create_attrs %{systolic: 118, diastolic: 72, pulse: 62, measured_at: "2025-11-30T02:55:00"}
   @update_attrs %{systolic: 121, diastolic: 76, pulse: 70, measured_at: "2025-12-01T02:55:00"}
@@ -204,6 +205,38 @@ defmodule BloodPressureRecordWeb.BloodPressureLiveTest do
 
       assert has_element?(view, "td.bg-sky-100", "2025/12/06")
       assert has_element?(view, "td.bg-pink-100", "2025/12/07")
+    end
+
+    test "weight status is judged by BMI from height", %{conn: conn} do
+      weight_fixture(%{weight: "80.0", measured_at: ~N[2025-12-08 09:00:00]})
+
+      {:ok, view, _html} = live(conn, ~p"/")
+
+      assert has_element?(view, "#latest-averages", "太りすぎ")
+
+      view
+      |> form("#weight-profile-form", %{"weight_profile" => %{"height_cm" => "180"}})
+      |> render_change()
+
+      assert has_element?(view, "#latest-averages", "標準より高め")
+
+      view
+      |> form("#weight-profile-form", %{"weight_profile" => %{"height_cm" => "191"}})
+      |> render_change()
+
+      assert has_element?(view, "#latest-averages", "標準")
+    end
+
+    test "weight cells are highlighted by BMI status", %{conn: conn} do
+      weight_fixture(%{weight: "60.0", measured_at: ~N[2025-12-09 09:00:00]})
+      weight_fixture(%{weight: "65.0", measured_at: ~N[2025-12-08 09:00:00]})
+      weight_fixture(%{weight: "80.0", measured_at: ~N[2025-12-07 09:00:00]})
+
+      {:ok, view, _html} = live(conn, ~p"/")
+
+      assert has_element?(view, "td.bg-emerald-50", "60.0")
+      assert has_element?(view, "td.bg-amber-50", "65.0")
+      assert has_element?(view, "td.bg-rose-50", "80.0")
     end
   end
 end
