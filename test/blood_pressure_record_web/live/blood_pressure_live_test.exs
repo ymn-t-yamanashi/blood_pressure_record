@@ -184,5 +184,26 @@ defmodule BloodPressureRecordWeb.BloodPressureLiveTest do
       assert has_element?(view, "td.bg-rose-300", Integer.to_string(blood_pressure.diastolic))
       assert has_element?(view, "td.bg-rose-300", Integer.to_string(blood_pressure.pulse))
     end
+
+    test "weekend dates are highlighted in the latest table", %{conn: conn} do
+      blood_pressure_fixture(%{
+        systolic: 120,
+        diastolic: 74,
+        pulse: 64,
+        measured_at: ~N[2025-12-06 09:00:00]
+      })
+
+      blood_pressure_fixture(%{
+        systolic: 122,
+        diastolic: 76,
+        pulse: 66,
+        measured_at: ~N[2025-12-07 09:00:00]
+      })
+
+      {:ok, view, _html} = live(conn, ~p"/")
+
+      assert has_element?(view, "td.bg-sky-100", "2025/12/06")
+      assert has_element?(view, "td.bg-pink-100", "2025/12/07")
+    end
   end
 end

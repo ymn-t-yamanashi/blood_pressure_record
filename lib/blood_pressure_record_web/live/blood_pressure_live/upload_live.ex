@@ -525,6 +525,14 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
     |> risk_container_class()
   end
 
+  def measurement_date_cell_class(%Date{} = date) do
+    case Date.day_of_week(date) do
+      6 -> "bg-sky-100"
+      7 -> "bg-pink-100"
+      _ -> "bg-zinc-50"
+    end
+  end
+
   def format_metric_value(nil), do: "-"
 
   def format_metric_value(value) when is_float(value),
