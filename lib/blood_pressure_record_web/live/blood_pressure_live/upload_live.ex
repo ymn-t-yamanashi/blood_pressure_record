@@ -197,20 +197,26 @@ defmodule BloodPressureRecordWeb.BloodPressureLive.UploadLive do
   def handle_event("update-height-cm", _params, socket), do: {:noreply, socket}
 
   def run(file) do
-    client = Ollama.init()
+    client = Ollama.init(ollama_base_url())
 
-    {:ok, ret} =
-      Ollama.completion(client,
-        model: "gemma3:27b",
-        prompt: prompt(),
-        images: [get_base64_image(file)]
-      )
+    case Ollama.completion(client,
+           model: "gemma3:27b",
+           prompt: prompt(),
+           images: [get_base64_image(file)]
+         ) do
+      {:ok, ret} ->
+        response = Map.get(ret, "response", "")
+        maybe_log_response(response)
+        response
 
-    response = Map.get(ret, "response", "")
+      {:error, reason} ->
+        Logger.error("Ollama request failed: #{inspect(reason)}")
+        "error"
+    end
+  end
 
-    maybe_log_response(response)
-
-    response
+  defp ollama_base_url do
+    System.get_env("OLLAMA_BASE_URL", "http://localhost:11434/api")
   end
 
   defp get_base64_image(image_file_path) do

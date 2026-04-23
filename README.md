@@ -63,6 +63,47 @@ mix phx.server
 
 ブラウザで `http://localhost:4000` を開いてください。
 
+## Docker 起動（公開ポート 4100）
+
+前提:
+
+- DB はコンテナ外（ホスト）にある `blood_pressure_record_dev.db` をそのまま使う
+- AI はホストで Ollama を起動しておく（コンテナから見える待受アドレスで起動）
+
+例:
+
+```bash
+OLLAMA_HOST=0.0.0.0:11434 ollama serve
+ollama pull gemma3:27b
+```
+
+起動:
+
+```bash
+docker compose up -d --build
+```
+
+アクセス先:
+
+- `http://localhost:4100`
+- 開発用ダッシュボード: `http://localhost:4100/dev/dashboard`
+
+停止:
+
+```bash
+docker compose down
+```
+
+トラブルシュート（AI が動作しない場合）:
+
+- コンテナ内疎通確認:
+
+```bash
+docker compose exec -T web curl -sS http://host.docker.internal:11434/api/tags
+```
+
+- 失敗する場合は、Ollama が `127.0.0.1` のみで待受している可能性があるため、`OLLAMA_HOST=0.0.0.0:11434` で起動する
+
 ## テストと品質チェック
 
 ```bash

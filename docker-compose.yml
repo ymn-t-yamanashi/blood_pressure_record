@@ -1,0 +1,22 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: blood_pressure_record-web
+    working_dir: /app
+    command: bash -lc "mix local.hex --force && mix local.rebar --force && mix phx.server"
+    environment:
+      MIX_ENV: dev
+      PHX_SERVER: "true"
+      PHX_DOCKER: "true"
+      PORT: "4000"
+      DATABASE_PATH: /app/blood_pressure_record_dev.db
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://127.0.0.1:11434/api}
+    ports:
+      - "4100:4000"
+    volumes:
+      - ./:/app
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped

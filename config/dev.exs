@@ -1,8 +1,22 @@
 import Config
 
+database_path =
+  System.get_env("DATABASE_PATH") || Path.expand("../blood_pressure_record_dev.db", __DIR__)
+
+watchers =
+  if System.get_env("PHX_DOCKER") == "true" do
+    []
+  else
+    [
+      esbuild:
+        {Esbuild, :install_and_run, [:blood_pressure_record, ~w(--sourcemap=inline --watch)]},
+      tailwind: {Tailwind, :install_and_run, [:blood_pressure_record, ~w(--watch)]}
+    ]
+  end
+
 # Configure your database
 config :blood_pressure_record, BloodPressureRecord.Repo,
-  database: Path.expand("../blood_pressure_record_dev.db", __DIR__),
+  database: database_path,
   pool_size: 5,
   stacktrace: true,
   show_sensitive_data_on_connection_error: true
@@ -21,11 +35,7 @@ config :blood_pressure_record, BloodPressureRecordWeb.Endpoint,
   code_reloader: true,
   debug_errors: true,
   secret_key_base: "rfcyT1pw1sVv9seByRmCtbnqZgoye5aRhWp9qDpa/5YiJBRFBVJKxoXdqSZ3tJyu",
-  watchers: [
-    esbuild:
-      {Esbuild, :install_and_run, [:blood_pressure_record, ~w(--sourcemap=inline --watch)]},
-    tailwind: {Tailwind, :install_and_run, [:blood_pressure_record, ~w(--watch)]}
-  ]
+  watchers: watchers
 
 # ## SSL Support
 #
