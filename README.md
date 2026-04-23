@@ -94,6 +94,27 @@ docker compose up -d --build
 docker compose down
 ```
 
+### rootless Docker でログイン不要の自動起動にする
+
+`rootless Docker` は通常 `systemd --user` で動作するため、`linger` が無効だとログイン中しかユーザーサービスが起動しません。  
+`linger` は「ユーザーがログインしていなくても `systemd --user` を動かし続ける」設定です。
+
+設定例（ユーザー名は `<your_username>` に置き換え）:
+
+```bash
+sudo loginctl enable-linger <your_username>
+systemctl --user enable --now docker
+docker update --restart unless-stopped blood_pressure_record-web
+```
+
+確認:
+
+```bash
+loginctl show-user <your_username> -p Linger
+systemctl --user is-enabled docker
+docker inspect -f '{{.Name}} -> {{.HostConfig.RestartPolicy.Name}}' blood_pressure_record-web
+```
+
 トラブルシュート（AI が動作しない場合）:
 
 - コンテナ内疎通確認:
